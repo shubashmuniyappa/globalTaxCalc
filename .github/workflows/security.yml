@@ -1,0 +1,128 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly scan
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - geolocation-service
+          - content-service
+          - analytics-service
+          - notification-service
+          - ad-service
+          - file-service
+          - monitoring-service
+          - frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.service }}
+          npm ci
+
+      - name: Run npm audit
+        run: |
+          cd ${{ matrix.service }}
+          npm audit --audit-level=moderate
+
+  python-security:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - tax-engine
+          - ai-service
+          - report-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.service }}
+          pip install -r requirements.txt
+          pip install safety bandit
+
+      - name: Run safety check
+        run: |
+          cd ${{ matrix.service }}
+          safety check
+
+      - name: Run bandit security linter
+        run: |
+          cd ${{ matrix.service }}
+          bandit -r . -x ./tests/
+
+  docker-security:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - tax-engine
+          - geolocation-service
+          - ai-service
+          - content-service
+          - analytics-service
+          - notification-service
+          - ad-service
+          - file-service
+          - report-service
+          - monitoring-service
+          - frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ${{ matrix.service }}/Dockerfile
+          failure-threshold: warning

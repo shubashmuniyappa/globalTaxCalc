@@ -1,0 +1,72 @@
+{
+  "version": "2024.1",
+  "country": "CA",
+  "tax_year": 2024,
+  "currency": "CAD",
+  "last_updated": "2024-01-15",
+  "federal": {
+    "tax_brackets": [
+      {"rate": 0.15, "min": 0, "max": 55867},
+      {"rate": 0.205, "min": 55868, "max": 111733},
+      {"rate": 0.26, "min": 111734, "max": 173205},
+      {"rate": 0.29, "min": 173206, "max": 246752},
+      {"rate": 0.33, "min": 246753, "max": null}
+    ],
+    "basic_personal_amount": 15705,
+    "cpp": {
+      "rate": 0.0595,
+      "exemption": 3500,
+      "maximum": 71300
+    },
+    "ei": {
+      "rate": 0.0163,
+      "maximum_insurable": 68500
+    }
+  },
+  "provinces": {
+    "ON": {
+      "name": "Ontario",
+      "tax_brackets": [
+        {"rate": 0.0505, "min": 0, "max": 51446},
+        {"rate": 0.0915, "min": 51447, "max": 102894},
+        {"rate": 0.1116, "min": 102895, "max": 150000},
+        {"rate": 0.1216, "min": 150001, "max": 220000},
+        {"rate": 0.1316, "min": 220001, "max": null}
+      ],
+      "basic_personal_amount": 12399
+    },
+    "BC": {
+      "name": "British Columbia",
+      "tax_brackets": [
+        {"rate": 0.0506, "min": 0, "max": 47937},
+        {"rate": 0.077, "min": 47938, "max": 95875},
+        {"rate": 0.105, "min": 95876, "max": 110076},
+        {"rate": 0.1229, "min": 110077, "max": 133664},
+        {"rate": 0.147, "min": 133665, "max": 181232},
+        {"rate": 0.168, "min": 181233, "max": null}
+      ],
+      "basic_personal_amount": 12580
+    },
+    "AB": {
+      "name": "Alberta",
+      "tax_brackets": [
+        {"rate": 0.10, "min": 0, "max": 148269},
+        {"rate": 0.12, "min": 148270, "max": 177922},
+        {"rate": 0.13, "min": 177923, "max": 237675},
+        {"rate": 0.14, "min": 237676, "max": 355511},
+        {"rate": 0.15, "min": 355512, "max": null}
+      ],
+      "basic_personal_amount": 21003
+    },
+    "QC": {
+      "name": "Quebec",
+      "tax_brackets": [
+        {"rate": 0.14, "min": 0, "max": 51780},
+        {"rate": 0.19, "min": 51781, "max": 103545},
+        {"rate": 0.24, "min": 103546, "max": 126000},
+        {"rate": 0.2575, "min": 126001, "max": null}
+      ],
+      "basic_personal_amount": 18056
+    }
+  }
+}

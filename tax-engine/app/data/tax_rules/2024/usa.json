@@ -1,0 +1,148 @@
+{
+  "version": "2024.1",
+  "country": "US",
+  "tax_year": 2024,
+  "currency": "USD",
+  "last_updated": "2024-01-15",
+  "federal": {
+    "tax_brackets": {
+      "single": [
+        {"rate": 0.10, "min": 0, "max": 11000},
+        {"rate": 0.12, "min": 11001, "max": 44725},
+        {"rate": 0.22, "min": 44726, "max": 95375},
+        {"rate": 0.24, "min": 95376, "max": 182050},
+        {"rate": 0.32, "min": 182051, "max": 231250},
+        {"rate": 0.35, "min": 231251, "max": 578125},
+        {"rate": 0.37, "min": 578126, "max": null}
+      ],
+      "married_filing_jointly": [
+        {"rate": 0.10, "min": 0, "max": 22000},
+        {"rate": 0.12, "min": 22001, "max": 89450},
+        {"rate": 0.22, "min": 89451, "max": 190750},
+        {"rate": 0.24, "min": 190751, "max": 364200},
+        {"rate": 0.32, "min": 364201, "max": 462500},
+        {"rate": 0.35, "min": 462501, "max": 693750},
+        {"rate": 0.37, "min": 693751, "max": null}
+      ],
+      "married_filing_separately": [
+        {"rate": 0.10, "min": 0, "max": 11000},
+        {"rate": 0.12, "min": 11001, "max": 44725},
+        {"rate": 0.22, "min": 44726, "max": 95375},
+        {"rate": 0.24, "min": 95376, "max": 182100},
+        {"rate": 0.32, "min": 182101, "max": 231250},
+        {"rate": 0.35, "min": 231251, "max": 346875},
+        {"rate": 0.37, "min": 346876, "max": null}
+      ],
+      "head_of_household": [
+        {"rate": 0.10, "min": 0, "max": 15700},
+        {"rate": 0.12, "min": 15701, "max": 59850},
+        {"rate": 0.22, "min": 59851, "max": 95350},
+        {"rate": 0.24, "min": 95351, "max": 182050},
+        {"rate": 0.32, "min": 182051, "max": 231250},
+        {"rate": 0.35, "min": 231251, "max": 578100},
+        {"rate": 0.37, "min": 578101, "max": null}
+      ]
+    },
+    "standard_deduction": {
+      "single": 14600,
+      "married_filing_jointly": 29200,
+      "married_filing_separately": 14600,
+      "head_of_household": 21900
+    },
+    "additional_standard_deduction": 1550,
+    "social_security": {
+      "rate": 0.062,
+      "wage_base": 168600
+    },
+    "medicare": {
+      "rate": 0.0145
+    },
+    "additional_medicare": {
+      "rate": 0.009,
+      "thresholds": {
+        "single": 200000,
+        "married_filing_jointly": 250000,
+        "married_filing_separately": 125000,
+        "head_of_household": 200000
+      }
+    }
+  },
+  "states": {
+    "CA": {
+      "name": "California",
+      "has_income_tax": true,
+      "tax_brackets": {
+        "single": [
+          {"rate": 0.01, "min": 0, "max": 10099},
+          {"rate": 0.02, "min": 10100, "max": 23942},
+          {"rate": 0.04, "min": 23943, "max": 37788},
+          {"rate": 0.06, "min": 37789, "max": 52455},
+          {"rate": 0.08, "min": 52456, "max": 66295},
+          {"rate": 0.093, "min": 66296, "max": 338639},
+          {"rate": 0.103, "min": 338640, "max": 406364},
+          {"rate": 0.113, "min": 406365, "max": 677278},
+          {"rate": 0.123, "min": 677279, "max": null}
+        ],
+        "married_filing_jointly": [
+          {"rate": 0.01, "min": 0, "max": 20198},
+          {"rate": 0.02, "min": 20199, "max": 47884},
+          {"rate": 0.04, "min": 47885, "max": 75576},
+          {"rate": 0.06, "min": 75577, "max": 104910},
+          {"rate": 0.08, "min": 104911, "max": 132590},
+          {"rate": 0.093, "min": 132591, "max": 677278},
+          {"rate": 0.103, "min": 677279, "max": 812728},
+          {"rate": 0.113, "min": 812729, "max": 1354556},
+          {"rate": 0.123, "min": 1354557, "max": null}
+        ]
+      },
+      "standard_deduction": {
+        "single": 5202,
+        "married_filing_jointly": 10404,
+        "married_filing_separately": 5202,
+        "head_of_household": 10404
+      }
+    },
+    "TX": {
+      "name": "Texas",
+      "has_income_tax": false
+    },
+    "FL": {
+      "name": "Florida",
+      "has_income_tax": false
+    },
+    "NY": {
+      "name": "New York",
+      "has_income_tax": true,
+      "tax_brackets": {
+        "single": [
+          {"rate": 0.04, "min": 0, "max": 8500},
+          {"rate": 0.045, "min": 8501, "max": 11700},
+          {"rate": 0.0525, "min": 11701, "max": 13900},
+          {"rate": 0.055, "min": 13901, "max": 80650},
+          {"rate": 0.06, "min": 80651, "max": 215400},
+          {"rate": 0.0685, "min": 215401, "max": 1077550},
+          {"rate": 0.0965, "min": 1077551, "max": 5000000},
+          {"rate": 0.103, "min": 5000001, "max": 25000000},
+          {"rate": 0.109, "min": 25000001, "max": null}
+        ],
+        "married_filing_jointly": [
+          {"rate": 0.04, "min": 0, "max": 17150},
+          {"rate": 0.045, "min": 17151, "max": 23600},
+          {"rate": 0.0525, "min": 23601, "max": 27900},
+          {"rate": 0.055, "min": 27901, "max": 161550},
+          {"rate": 0.06, "min": 161551, "max": 323200},
+          {"rate": 0.0685, "min": 323201, "max": 2155350},
+          {"rate": 0.0965, "min": 2155351, "max": 5000000},
+          {"rate": 0.103, "min": 5000001, "max": 25000000},
+          {"rate": 0.109, "min": 25000001, "max": null}
+        ]
+      },
+      "standard_deduction": {
+        "single": 8000,
+        "married_filing_jointly": 16050,
+        "married_filing_separately": 8000,
+        "head_of_household": 11200
+      }
+    }
+  }
+}

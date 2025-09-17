@@ -1,0 +1,72 @@
+{
+  "collectionName": "components_shared_seos",
+  "info": {
+    "displayName": "SEO",
+    "description": "SEO metadata component for all content types",
+    "icon": "search"
+  },
+  "options": {},
+  "attributes": {
+    "metaTitle": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60,
+      "minLength": 10,
+      "unique": false
+    },
+    "metaDescription": {
+      "type": "text",
+      "required": true,
+      "maxLength": 160,
+      "minLength": 50
+    },
+    "metaImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "metaSocial": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.meta-social"
+    },
+    "keywords": {
+      "type": "text",
+      "required": false,
+      "minLength": 10,
+      "maxLength": 255
+    },
+    "metaRobots": {
+      "type": "string",
+      "required": false,
+      "default": "index,follow"
+    },
+    "structuredData": {
+      "type": "json",
+      "required": false
+    },
+    "metaViewport": {
+      "type": "string",
+      "required": false,
+      "default": "width=device-width, initial-scale=1"
+    },
+    "canonicalURL": {
+      "type": "string",
+      "required": false
+    },
+    "metaRating": {
+      "type": "string",
+      "required": false
+    },
+    "metaAuthor": {
+      "type": "string",
+      "required": false
+    },
+    "ogLocale": {
+      "type": "string",
+      "required": false,
+      "default": "en_US"
+    }
+  }
+}

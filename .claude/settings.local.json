@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote add:*)",
+      "Bash(mkdir:*)",
+      "Bash(for service in geolocation-service content-service analytics-service notification-service ad-service file-service monitoring-service)",
+      "Bash(do cp auth-service/Dockerfile $service/Dockerfile)",
+      "Bash(done)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

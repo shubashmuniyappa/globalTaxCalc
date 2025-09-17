@@ -1,0 +1,40 @@
+{
+  "version": "2024.1",
+  "country": "UK",
+  "tax_year": 2024,
+  "currency": "GBP",
+  "last_updated": "2024-04-06",
+  "income_tax": {
+    "brackets": [
+      {"rate": 0.20, "min": 0, "max": 37700},
+      {"rate": 0.40, "min": 37701, "max": 125140},
+      {"rate": 0.45, "min": 125141, "max": null}
+    ]
+  },
+  "personal_allowance": {
+    "base": 12570,
+    "taper_threshold": 100000,
+    "taper_rate": 0.5
+  },
+  "national_insurance": {
+    "class1": {
+      "lower_threshold": 12570,
+      "upper_threshold": 50270,
+      "main_rate": 0.12,
+      "additional_rate": 0.02
+    },
+    "class2": {
+      "small_profits_threshold": 6515,
+      "weekly_rate": 3.45
+    }
+  },
+  "marriage_allowance": {
+    "amount": 1260,
+    "income_threshold": 50270
+  },
+  "pension_annual_allowance": {
+    "standard": 40000,
+    "taper_threshold": 240000,
+    "minimum": 4000
+  }
+}

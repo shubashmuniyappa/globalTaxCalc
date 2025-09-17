@@ -1,0 +1,47 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[[services]]
+name = "auth-service"
+
+[services.env]
+NODE_ENV = "production"
+PORT = "3001"
+
+[services.resources]
+memoryGB = 1
+vCPU = 1
+
+[services.healthcheck]
+path = "/health"
+intervalSeconds = 30
+timeoutSeconds = 10
+
+[services.scaling]
+minInstances = 1
+maxInstances = 3
+
+[services.networking]
+serviceDomain = "auth-service"
+externalDomain = true
+
+# Environment variables that should be set in Railway dashboard:
+# - DATABASE_URL (PostgreSQL connection string)
+# - JWT_SECRET (strong random string)
+# - SESSION_SECRET (strong random string)
+# - SENDGRID_API_KEY (for email service)
+# - GOOGLE_CLIENT_ID (for Google OAuth)
+# - GOOGLE_CLIENT_SECRET (for Google OAuth)
+# - APPLE_CLIENT_ID (for Apple OAuth)
+# - APPLE_TEAM_ID (for Apple OAuth)
+# - APPLE_KEY_ID (for Apple OAuth)
+# - APPLE_PRIVATE_KEY (for Apple OAuth)
+# - FRONTEND_URL (frontend application URL)
+# - CORS_ORIGIN (allowed CORS origins)

@@ -1,0 +1,51 @@
+{
+  "version": "2024.1",
+  "country": "DE",
+  "tax_year": 2024,
+  "currency": "EUR",
+  "last_updated": "2024-01-01",
+  "basic_allowance": 11604,
+  "work_expense_allowance": 1230,
+  "tax_formula": {
+    "threshold1": 11604,
+    "threshold2": 62810,
+    "threshold3": 277826
+  },
+  "solidarity_tax": {
+    "rate": 0.055,
+    "threshold": 17543
+  },
+  "church_tax": {
+    "rate": 0.08,
+    "note": "Varies by state (8% or 9%), applies only to church members"
+  },
+  "social_insurance": {
+    "ceiling": 90600,
+    "rates": {
+      "pension": 0.093,
+      "unemployment": 0.013,
+      "health": 0.073,
+      "care": 0.01525
+    },
+    "combined_employee_rate": 0.193
+  },
+  "deduction_categories": {
+    "work_expenses": {
+      "allowance": 1230,
+      "max_without_receipts": 1230
+    },
+    "special_expenses": {
+      "retirement_contributions": {
+        "max_deductible": 27565
+      },
+      "charitable_donations": {
+        "max_percentage": 0.2
+      }
+    },
+    "extraordinary_expenses": {
+      "medical": {
+        "threshold_percentage": 0.02
+      }
+    }
+  }
+}

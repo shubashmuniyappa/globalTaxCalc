@@ -1,0 +1,57 @@
+# Docker Compose for API Gateway local development
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=debug
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+    networks:
+      - globaltaxcalc-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - globaltaxcalc-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - ENVIRONMENT=development
+    depends_on:
+      - api-gateway
+    networks:
+      - globaltaxcalc-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  globaltaxcalc-network:
+    driver: bridge

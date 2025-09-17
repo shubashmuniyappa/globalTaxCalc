@@ -1,0 +1,45 @@
+{
+  "version": "2024.1",
+  "country": "AU",
+  "tax_year": 2024,
+  "currency": "AUD",
+  "last_updated": "2024-07-01",
+  "income_tax": {
+    "brackets": [
+      {"rate": 0.00, "min": 0, "max": 18200},
+      {"rate": 0.19, "min": 18201, "max": 45000},
+      {"rate": 0.325, "min": 45001, "max": 120000},
+      {"rate": 0.37, "min": 120001, "max": 180000},
+      {"rate": 0.45, "min": 180001, "max": null}
+    ]
+  },
+  "medicare_levy": {
+    "rate": 0.02,
+    "threshold": {
+      "single": 24276,
+      "married_filing_jointly": 41089,
+      "married_filing_separately": 24276
+    }
+  },
+  "medicare_levy_surcharge": {
+    "threshold": {
+      "single": 97000,
+      "married_filing_jointly": 194000,
+      "married_filing_separately": 97000
+    },
+    "tiers": [
+      {"rate": 0.01, "min": 97000, "max": 113000},
+      {"rate": 0.0125, "min": 113001, "max": 151000},
+      {"rate": 0.015, "min": 151001, "max": null}
+    ]
+  },
+  "superannuation": {
+    "guarantee_rate": 0.115,
+    "concessional_cap": 30000,
+    "non_concessional_cap": 120000
+  },
+  "capital_gains": {
+    "discount_rate": 0.5,
+    "holding_period_months": 12
+  }
+}

@@ -1,0 +1,17 @@
+# Testing dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+httpx>=0.24.0
+fastapi[test]>=0.103.0
+
+# Development dependencies
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional performance testing
+pytest-benchmark>=4.0.0
+pytest-xdist>=3.3.0
