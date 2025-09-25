@@ -1,0 +1,76 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.globaltaxcalc.app"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
+
+        // TWA-specific configurations
+        resValue "string", "app_name", "GlobalTaxCalc"
+        resValue "string", "launcher_name", "Tax Calculator"
+        resValue "string", "asset_statements", '[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"web\", \"site\": \"https://globaltaxcalc.com\"}}]'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
+    }
+
+    signingConfigs {
+        release {
+            // These should be set via environment variables or gradle.properties
+            storeFile file(project.hasProperty('RELEASE_STORE_FILE') ? RELEASE_STORE_FILE : 'release.keystore')
+            storePassword project.hasProperty('RELEASE_STORE_PASSWORD') ? RELEASE_STORE_PASSWORD : 'android'
+            keyAlias project.hasProperty('RELEASE_KEY_ALIAS') ? RELEASE_KEY_ALIAS : 'androiddebugkey'
+            keyPassword project.hasProperty('RELEASE_KEY_PASSWORD') ? RELEASE_KEY_PASSWORD : 'android'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    namespace 'com.globaltaxcalc.app'
+}
+
+dependencies {
+    implementation 'androidx.browser:browser:1.6.0'
+    implementation 'com.github.GoogleChrome:custom-tabs-client:d07e521'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core:1.10.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.6.1'
+}
+
+// Optional: Add tasks for automated builds
+task assembleAndSign {
+    dependsOn 'assembleRelease'
+    doLast {
+        println "✅ TWA APK built and signed successfully"
+        println "📱 APK location: ${project.buildDir}/outputs/apk/release/"
+    }
+}
+
+task bundleAndSign {
+    dependsOn 'bundleRelease'
+    doLast {
+        println "✅ TWA App Bundle built and signed successfully"
+        println "📱 AAB location: ${project.buildDir}/outputs/bundle/release/"
+    }
+}

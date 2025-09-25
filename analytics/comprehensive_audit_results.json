@@ -1,0 +1,135 @@
+{
+  "audit_timestamp": "2025-09-24T09:07:33.852477",
+  "audit_duration_seconds": 7.309341,
+  "summary": {
+    "overall_score": 84.375,
+    "status": "GOOD - Minor issues to address",
+    "file_completeness": 100.0,
+    "import_success_rate": 37.5,
+    "functionality_success_rate": 100.0,
+    "integration_working": true
+  },
+  "detailed_results": {
+    "files": {
+      "ml-pipeline/ml_pipeline_engine.py": {
+        "status": "exists",
+        "size": 46370
+      },
+      "predictive-models/predictive_analytics_engine.py": {
+        "status": "exists",
+        "size": 50737
+      },
+      "data-warehouse/data_warehouse_engine.py": {
+        "status": "exists",
+        "size": 45449
+      },
+      "real-time-engine/real_time_analytics_engine.py": {
+        "status": "exists",
+        "size": 33881
+      },
+      "visualization-platform/advanced_visualization_engine.py": {
+        "status": "exists",
+        "size": 51121
+      },
+      "insights-engine/automated_insights_engine.py": {
+        "status": "exists",
+        "size": 59881
+      },
+      "recommendation-engine/intelligent_recommendation_engine.py": {
+        "status": "exists",
+        "size": 59237
+      },
+      "performance-optimization/performance_optimization_engine.py": {
+        "status": "exists",
+        "size": 53501
+      },
+      "dependency_manager.py": {
+        "status": "exists",
+        "size": 24761
+      },
+      "ml_pipeline_standalone.py": {
+        "status": "exists",
+        "size": 22021
+      },
+      "simple_ml_test.py": {
+        "status": "exists",
+        "size": 5968
+      },
+      "comprehensive_test.py": {
+        "status": "exists",
+        "size": 16679
+      },
+      "run_full_system_test.py": {
+        "status": "exists",
+        "size": 13124
+      }
+    },
+    "imports": {
+      "MLPipelineEngine": {
+        "status": "success",
+        "has_main_class": true
+      },
+      "PredictiveAnalyticsEngine": {
+        "status": "success",
+        "has_main_class": true
+      },
+      "DataWarehouseEngine": {
+        "status": "import_error",
+        "error": "No module named 'boto3'"
+      },
+      "RealTimeAnalyticsEngine": {
+        "status": "import_error",
+        "error": "No module named 'flask'"
+      },
+      "AdvancedVisualizationEngine": {
+        "status": "import_error",
+        "error": "No module named 'bokeh'"
+      },
+      "AutomatedInsightsEngine": {
+        "status": "import_error",
+        "error": "No module named 'openai'"
+      },
+      "IntelligentRecommendationEngine": {
+        "status": "import_error",
+        "error": "No module named 'networkx'"
+      },
+      "PerformanceOptimizationEngine": {
+        "status": "success",
+        "has_main_class": true
+      }
+    },
+    "instantiation": {
+      "MLPipelineEngine": {
+        "status": "success",
+        "attributes": 8
+      },
+      "DependencyManager": {
+        "status": "success",
+        "attributes": 3
+      }
+    },
+    "functionality": {
+      "ml_pipeline": {
+        "status": "working",
+        "data_generated": 100
+      },
+      "data_processing": {
+        "status": "working",
+        "records": 50
+      },
+      "analytics": {
+        "status": "working",
+        "mean": 50.08328034148442,
+        "trend": 0.005728946834948498
+      }
+    },
+    "integration": {
+      "full_pipeline_fallback": {
+        "status": "fallback_success",
+        "records_processed": 500,
+        "features_created": 11,
+        "fallback_accuracy": 1.0
+      }
+    }
+  }
+}

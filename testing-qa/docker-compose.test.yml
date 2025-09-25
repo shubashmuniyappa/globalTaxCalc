@@ -1,0 +1,307 @@
+version: '3.8'
+
+services:
+  # Test database
+  test-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: globaltaxcalc_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+      - ./tests/fixtures/database:/docker-entrypoint-initdb.d
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d globaltaxcalc_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test Redis
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Mock external services
+  mock-services:
+    build:
+      context: ./tests/mocks
+      dockerfile: Dockerfile
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=test
+    networks:
+      - test-network
+    volumes:
+      - ./tests/mocks:/app
+      - /app/node_modules
+
+  # API Gateway for testing
+  test-api-gateway:
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile.test
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test:test@test-db:5432/globaltaxcalc_test
+      - REDIS_URL=redis://test-redis:6379
+      - JWT_SECRET=test_jwt_secret_key_for_testing_only
+      - STRIPE_SECRET_KEY=sk_test_example
+      - EXTERNAL_API_URL=http://mock-services:3000
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+      mock-services:
+        condition: service_started
+    networks:
+      - test-network
+    volumes:
+      - ../api-gateway:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Auth Service for testing
+  test-auth-service:
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile.test
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test:test@test-db:5432/globaltaxcalc_test
+      - REDIS_URL=redis://test-redis:6379
+      - JWT_SECRET=test_jwt_secret_key_for_testing_only
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Frontend for E2E testing
+  test-frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.test
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=test
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_AUTH_URL=http://localhost:3002
+      - REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_example
+    depends_on:
+      - test-api-gateway
+      - test-auth-service
+    networks:
+      - test-network
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+
+  # Selenium Grid Hub
+  selenium-hub:
+    image: selenium/hub:4.15.0
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"
+      - "4442:4442"
+      - "4443:4443"
+    networks:
+      - test-network
+
+  # Chrome browser for testing
+  selenium-chrome:
+    image: selenium/node-chrome:4.15.0
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+    networks:
+      - test-network
+    scale: 2
+
+  # Firefox browser for testing
+  selenium-firefox:
+    image: selenium/node-firefox:4.15.0
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+    networks:
+      - test-network
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test:test@test-db:5432/globaltaxcalc_test
+      - REDIS_URL=redis://test-redis:6379
+      - API_URL=http://test-api-gateway:3000
+      - FRONTEND_URL=http://test-frontend:3000
+      - SELENIUM_HUB_URL=http://selenium-hub:4444
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+      test-api-gateway:
+        condition: service_healthy
+      test-frontend:
+        condition: service_started
+      selenium-hub:
+        condition: service_started
+    networks:
+      - test-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./tests/reports:/app/tests/reports
+    command: ["npm", "run", "test:all"]
+
+  # Performance testing service
+  performance-test:
+    build:
+      context: ./tests/performance
+      dockerfile: Dockerfile
+    environment:
+      - TARGET_URL=http://test-frontend:3000
+      - API_URL=http://test-api-gateway:3000
+    depends_on:
+      - test-frontend
+      - test-api-gateway
+    networks:
+      - test-network
+    volumes:
+      - ./tests/performance:/app
+      - ./tests/reports/performance:/app/reports
+    profiles:
+      - performance
+
+  # Security testing service
+  security-test:
+    image: owasp/zap2docker-stable
+    environment:
+      - TARGET_URL=http://test-frontend:3000
+    depends_on:
+      - test-frontend
+    networks:
+      - test-network
+    volumes:
+      - ./tests/reports/security:/zap/reports
+    command: ["zap-baseline.py", "-t", "http://test-frontend:3000", "-J", "/zap/reports/baseline-report.json"]
+    profiles:
+      - security
+
+  # Test report server
+  test-reports:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./tests/reports:/usr/share/nginx/html
+      - ./tests/config/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - test-network
+    profiles:
+      - reports
+
+  # Database migration runner
+  db-migrate:
+    build:
+      context: ../database
+      dockerfile: Dockerfile.migrate
+    environment:
+      - DATABASE_URL=postgresql://test:test@test-db:5432/globaltaxcalc_test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    networks:
+      - test-network
+    volumes:
+      - ../database/migrations:/app/migrations
+      - ../database/seeds:/app/seeds
+
+  # Test data generator
+  test-data-generator:
+    build:
+      context: ./tests/data-generator
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test:test@test-db:5432/globaltaxcalc_test
+      - REDIS_URL=redis://test-redis:6379
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    volumes:
+      - ./tests/data-generator:/app
+      - ./tests/fixtures:/app/fixtures
+
+  # Monitoring and metrics
+  test-metrics:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./tests/config/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - test-network
+    profiles:
+      - monitoring
+
+  # Log aggregation
+  test-logs:
+    image: elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - test_logs_data:/usr/share/elasticsearch/data
+    networks:
+      - test-network
+    profiles:
+      - logging
+
+volumes:
+  test_db_data:
+  test_logs_data:
+
+networks:
+  test-network:
+    driver: bridge

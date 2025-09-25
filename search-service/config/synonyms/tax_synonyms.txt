@@ -1,0 +1,74 @@
+# Tax-related synonyms for improved search
+
+# General tax terms
+tax,taxation,levy,duty,assessment,charge
+income,salary,wages,earnings,pay,compensation,remuneration
+deduction,exemption,allowance,credit,relief,writeoff
+rate,percentage,percent,ratio,proportion
+calculator,compute,calculate,estimation,estimator
+federal,national,country,government
+state,provincial,regional,local
+bracket,tier,band,range,level
+
+# Tax types
+income tax,personal tax,individual tax
+corporate tax,business tax,company tax
+sales tax,vat,value added tax,gst,goods and services tax
+property tax,real estate tax,land tax
+capital gains,capital gain,cgt
+inheritance tax,estate tax,death duty
+payroll tax,employment tax,social security
+
+# Filing status
+single,unmarried,individual
+married,joint,spouse,couple
+head of household,hoh
+widow,widower,surviving spouse
+separate,married filing separately
+
+# Common deductions
+mortgage,home loan,housing interest
+charity,charitable,donation,gift
+medical,healthcare,health expenses
+education,tuition,student,college
+retirement,401k,ira,pension,superannuation
+business,work,professional,office
+
+# Countries and regions
+usa,us,united states,america
+uk,united kingdom,britain,england
+canada,ca
+australia,au,oz
+germany,de,deutschland
+france,fr
+japan,jp
+singapore,sg
+india,in
+china,cn
+
+# Time periods
+annual,yearly,per year,pa
+monthly,per month,pm
+quarterly,q1,q2,q3,q4
+financial year,fiscal year,fy,tax year
+
+# Common questions
+how,what,when,where,why,which
+calculate,compute,estimate,determine,figure out
+owe,pay,liable,due,owing
+refund,return,rebate,get back
+deadline,due date,filing date
+form,return,document,paperwork
+
+# Action words
+file,submit,lodge,send
+prepare,complete,fill out,finish
+claim,deduct,subtract,take off
+report,declare,disclose,state
+
+# Professional terms
+accountant,tax advisor,cpa,tax preparer
+audit,examination,review,check
+penalty,fine,interest,late fee
+extension,delay,postpone
+amend,correct,change,update

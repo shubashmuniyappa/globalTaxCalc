@@ -1,0 +1,558 @@
+/* Responsive Chart Layout Styles */
+.responsive-chart-layout {
+  --layout-primary: #3b82f6;
+  --layout-secondary: #8b5cf6;
+  --layout-success: #10b981;
+  --layout-warning: #f59e0b;
+  --layout-error: #ef4444;
+  --layout-text: #374151;
+  --layout-text-light: #6b7280;
+  --layout-bg: #ffffff;
+  --layout-border: #e5e7eb;
+  --layout-surface: #f8fafc;
+  --layout-hover: #f3f4f6;
+
+  width: 100%;
+  min-height: 100vh;
+  background: var(--layout-bg);
+  color: var(--layout-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Layout Header */
+.layout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--layout-border);
+  background: linear-gradient(135deg, var(--layout-surface) 0%, #f1f5f9 100%);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.layout-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--layout-text);
+  line-height: 1.2;
+}
+
+.screen-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.screen-size,
+.layout-type {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--layout-primary);
+}
+
+.layout-type {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--layout-secondary);
+}
+
+/* Layout Switcher */
+.layout-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--layout-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.switcher-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--layout-text-light);
+  margin-right: 4px;
+}
+
+.layout-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--layout-text-light);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.layout-option:hover:not(:disabled) {
+  background: var(--layout-hover);
+  color: var(--layout-text);
+}
+
+.layout-option.active {
+  background: var(--layout-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.layout-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.layout-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.layout-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Chart Container */
+.chart-container {
+  padding: 24px;
+  min-height: calc(100vh - 120px);
+}
+
+/* Grid Layout */
+.chart-layout-grid {
+  display: grid;
+  width: 100%;
+  align-items: start;
+}
+
+/* Masonry Layout */
+.chart-layout-masonry {
+  position: relative;
+  width: 100%;
+}
+
+/* Dashboard Layout */
+.chart-layout-dashboard {
+  display: grid;
+  width: 100%;
+  align-items: start;
+}
+
+/* Mobile Layout */
+.chart-layout-mobile {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Chart Wrapper */
+.chart-wrapper {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--layout-border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.chart-wrapper:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.chart-wrapper.chart-taxBracket {
+  --chart-accent: var(--layout-primary);
+}
+
+.chart-wrapper.chart-incomeBreakdown {
+  --chart-accent: var(--layout-success);
+}
+
+.chart-wrapper.chart-comparison {
+  --chart-accent: var(--layout-secondary);
+}
+
+/* Responsive Chart Classes */
+.responsive-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.responsive-chart.mobile {
+  font-size: 14px;
+}
+
+.responsive-chart.tablet {
+  font-size: 15px;
+}
+
+.responsive-chart.desktop {
+  font-size: 16px;
+}
+
+.responsive-chart.wide {
+  font-size: 16px;
+}
+
+/* Chart Placeholder */
+.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--layout-surface) 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 2px dashed var(--layout-border);
+  color: var(--layout-text-light);
+  transition: all 0.3s ease;
+}
+
+.placeholder-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.placeholder-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--layout-border);
+  border-top-color: var(--layout-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.placeholder-content p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Performance Indicator */
+.performance-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(17, 24, 39, 0.9);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  display: flex;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.perf-metric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.perf-label {
+  color: #9ca3af;
+}
+
+.perf-value {
+  color: #f9fafb;
+  font-weight: 700;
+}
+
+.perf-value.warning {
+  color: #fbbf24;
+}
+
+.perf-value.good {
+  color: #34d399;
+}
+
+/* Fullscreen Overlay */
+.fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreen-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.responsive-chart-layout.fullscreen .chart-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2001;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transform: none !important;
+}
+
+/* Screen Size Specific Styles */
+
+/* Mobile Styles */
+.responsive-chart-layout.mobile {
+  font-size: 14px;
+}
+
+.responsive-chart-layout.mobile .layout-header {
+  padding: 16px 20px;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.responsive-chart-layout.mobile .layout-info h2 {
+  font-size: 20px;
+}
+
+.responsive-chart-layout.mobile .layout-switcher {
+  display: none;
+}
+
+.responsive-chart-layout.mobile .chart-container {
+  padding: 16px;
+}
+
+.responsive-chart-layout.mobile .chart-wrapper {
+  margin-bottom: 16px;
+}
+
+.responsive-chart-layout.mobile .chart-wrapper:hover {
+  transform: none;
+}
+
+.responsive-chart-layout.mobile .performance-indicator {
+  bottom: 10px;
+  right: 10px;
+  left: 10px;
+  justify-content: center;
+}
+
+/* Tablet Styles */
+.responsive-chart-layout.tablet {
+  font-size: 15px;
+}
+
+.responsive-chart-layout.tablet .layout-header {
+  padding: 18px 22px;
+}
+
+.responsive-chart-layout.tablet .layout-info h2 {
+  font-size: 22px;
+}
+
+.responsive-chart-layout.tablet .chart-container {
+  padding: 20px;
+}
+
+/* Desktop Styles */
+.responsive-chart-layout.desktop {
+  font-size: 16px;
+}
+
+.responsive-chart-layout.desktop .chart-container {
+  padding: 24px;
+}
+
+/* Wide Screen Styles */
+.responsive-chart-layout.wide {
+  font-size: 16px;
+}
+
+.responsive-chart-layout.wide .chart-container {
+  padding: 32px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.responsive-chart-layout.wide .layout-header {
+  padding: 24px 32px;
+}
+
+/* Animations */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .responsive-chart-layout {
+    --layout-bg: #0f172a;
+    --layout-text: #f8fafc;
+    --layout-text-light: #94a3b8;
+    --layout-border: #334155;
+    --layout-surface: #1e293b;
+    --layout-hover: #334155;
+  }
+
+  .layout-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  }
+
+  .layout-switcher {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .chart-wrapper {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .chart-placeholder {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #475569;
+  }
+
+  .performance-indicator {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(51, 65, 85, 0.5);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .responsive-chart-layout {
+    --layout-border: #000;
+  }
+
+  .chart-wrapper,
+  .layout-switcher {
+    border-width: 2px;
+  }
+
+  .layout-option.active {
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--layout-primary);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .chart-wrapper {
+    transition: none;
+  }
+
+  .chart-wrapper:hover {
+    transform: none;
+  }
+
+  .layout-option {
+    transition: none;
+  }
+
+  .placeholder-spinner {
+    animation: none;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .responsive-chart-layout {
+    background: white;
+    color: black;
+  }
+
+  .layout-header {
+    background: white;
+    border-bottom: 2px solid black;
+    position: static;
+  }
+
+  .layout-switcher,
+  .performance-indicator {
+    display: none;
+  }
+
+  .chart-wrapper {
+    background: white;
+    border: 1px solid black;
+    box-shadow: none;
+    break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  .chart-container {
+    padding: 0;
+  }
+
+  .fullscreen-overlay {
+    display: none;
+  }
+}
+
+/* Custom Media Queries for Specific Breakpoints */
+@media (max-width: 480px) {
+  .chart-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .chart-layout-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)) !important;
+    gap: 20px !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .chart-layout-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 24px !important;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .chart-layout-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)) !important;
+    gap: 28px !important;
+  }
+}
+
+@media (min-width: 1441px) {
+  .chart-layout-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 32px !important;
+  }
+}

@@ -1,0 +1,102 @@
+# Cloudflare Workers configuration for GlobalTaxCalc CDN & Edge Computing
+
+name = "globaltaxcalc-edge"
+main = "src/index.js"
+compatibility_date = "2023-10-25"
+workers_dev = true
+
+# Environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
+API_BASE_URL = "https://api.globaltaxcalc.com"
+ANALYTICS_TOKEN = "your-analytics-token"
+CACHE_TTL = "3600"
+ENABLE_ANALYTICS = "true"
+ENABLE_SECURITY = "true"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+API_BASE_URL = "https://api-staging.globaltaxcalc.com"
+ANALYTICS_TOKEN = "your-staging-analytics-token"
+CACHE_TTL = "1800"
+ENABLE_ANALYTICS = "true"
+ENABLE_SECURITY = "false"
+
+[env.development.vars]
+ENVIRONMENT = "development"
+API_BASE_URL = "http://localhost:3000"
+ANALYTICS_TOKEN = "dev-token"
+CACHE_TTL = "300"
+ENABLE_ANALYTICS = "false"
+ENABLE_SECURITY = "false"
+
+# KV Namespaces for caching and configuration
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "your-cache-kv-id"
+preview_id = "your-cache-kv-preview-id"
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "your-config-kv-id"
+preview_id = "your-config-kv-preview-id"
+
+[[kv_namespaces]]
+binding = "ANALYTICS_KV"
+id = "your-analytics-kv-id"
+preview_id = "your-analytics-kv-preview-id"
+
+# Durable Objects for real-time features
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[durable_objects.bindings]]
+name = "ANALYTICS_AGGREGATOR"
+class_name = "AnalyticsAggregator"
+
+# R2 Storage for static assets
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "globaltaxcalc-assets"
+
+# Analytics Engine for edge analytics
+[[analytics_engine_datasets]]
+binding = "EDGE_ANALYTICS"
+
+# Custom domains
+[env.production]
+zone_id = "your-zone-id"
+routes = [
+    "globaltaxcalc.com/*",
+    "www.globaltaxcalc.com/*",
+    "api.globaltaxcalc.com/*"
+]
+
+# Custom pages for errors
+[env.production.pages]
+"404" = "404.html"
+"500" = "500.html"
+
+# Security headers
+[env.production.security]
+csp = "default-src 'self'; script-src 'self' 'unsafe-inline' *.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: *.cloudflare.com; connect-src 'self' *.globaltaxcalc.com"
+
+# Caching rules
+[[rules]]
+name = "Static Assets"
+pattern = "*.{css,js,png,jpg,jpeg,gif,ico,svg,woff,woff2,ttf,eot}"
+cache_ttl = 31536000  # 1 year
+browser_ttl = 31536000
+
+[[rules]]
+name = "API Responses"
+pattern = "/api/*"
+cache_ttl = 300  # 5 minutes
+browser_ttl = 0
+
+[[rules]]
+name = "HTML Pages"
+pattern = "*.html"
+cache_ttl = 3600  # 1 hour
+browser_ttl = 3600

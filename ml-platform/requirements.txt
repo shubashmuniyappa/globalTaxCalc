@@ -1,0 +1,75 @@
+# Core ML Libraries
+scikit-learn==1.3.0
+tensorflow==2.13.0
+numpy==1.24.3
+pandas==2.0.3
+matplotlib==3.7.1
+seaborn==0.12.2
+
+# MLOps Infrastructure
+mlflow==2.7.1
+feast==0.34.0
+dvc==3.20.0
+kedro==0.18.12
+
+# Model Serving
+fastapi==0.103.1
+uvicorn==0.23.2
+pydantic==2.3.0
+
+# Data Processing
+polars==0.18.15
+pyarrow==12.0.1
+joblib==1.3.2
+
+# Feature Engineering
+feature-engine==1.6.2
+category-encoders==2.6.2
+imbalanced-learn==0.11.0
+
+# Model Monitoring
+evidently==0.4.5
+great-expectations==0.17.12
+whylogs==1.3.4
+
+# Experiment Tracking
+wandb==0.15.8
+tensorboard==2.13.0
+optuna==3.3.0
+
+# Cloud & Infrastructure
+boto3==1.28.17
+redis==4.6.0
+celery==5.3.1
+prometheus-client==0.17.1
+
+# API & Web
+flask==2.3.2
+streamlit==1.25.0
+plotly==5.15.0
+dash==2.12.1
+
+# Testing & Quality
+pytest==7.4.0
+black==23.7.0
+flake8==6.0.0
+mypy==1.5.1
+
+# Time Series
+prophet==1.1.4
+statsmodels==0.14.0
+sktime==0.21.1
+
+# Deep Learning Extras
+torch==2.0.1
+transformers==4.33.2
+xgboost==1.7.6
+lightgbm==4.0.0
+catboost==1.2.2
+
+# Utilities
+python-dotenv==1.0.0
+PyYAML==6.0.1
+click==8.1.7
+tqdm==4.66.1
+loguru==0.7.0

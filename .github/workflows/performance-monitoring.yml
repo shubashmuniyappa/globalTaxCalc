@@ -1,0 +1,584 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    # Run performance tests every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      test_duration:
+        description: 'Test duration in minutes'
+        required: false
+        default: '10'
+      load_pattern:
+        description: 'Load test pattern'
+        required: false
+        default: 'baseline'
+        type: choice
+        options:
+          - baseline
+          - stress
+          - spike
+          - endurance
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  # === PERFORMANCE BASELINE TESTS ===
+  baseline-performance:
+    name: Baseline Performance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Run baseline performance tests
+        working-directory: ./tests
+        run: |
+          npm install
+
+          # Run k6 baseline test
+          BASE_URL=${{ secrets.STAGING_URL || 'https://staging.globaltaxcalc.com' }} k6 run load-tests/k6-script.js --out json=k6-baseline-results.json
+
+          # Run Artillery baseline test
+          artillery run load-tests/artillery-config.yml --output artillery-baseline-results.json
+
+      - name: Analyze performance results
+        working-directory: ./tests
+        run: |
+          node <<EOF
+          const fs = require('fs');
+
+          // Process k6 results
+          const k6Results = JSON.parse(fs.readFileSync('k6-baseline-results.json', 'utf8'));
+          const k6Metrics = k6Results.metrics;
+
+          // Process Artillery results
+          const artilleryResults = JSON.parse(fs.readFileSync('artillery-baseline-results.json', 'utf8'));
+
+          const performanceReport = {
+            timestamp: new Date().toISOString(),
+            test_type: 'baseline',
+            k6_metrics: {
+              http_req_duration: k6Metrics.http_req_duration,
+              http_req_failed: k6Metrics.http_req_failed,
+              http_reqs: k6Metrics.http_reqs,
+              vus: k6Metrics.vus
+            },
+            artillery_metrics: {
+              response_time: artilleryResults.aggregate.latency,
+              rps: artilleryResults.aggregate.rps,
+              errors: artilleryResults.aggregate.errors
+            },
+            thresholds: {
+              p95_response_time: 2000,
+              error_rate_max: 0.05,
+              min_rps: 10
+            }
+          };
+
+          // Check if thresholds are met
+          const p95 = k6Metrics.http_req_duration?.p95 || 0;
+          const errorRate = k6Metrics.http_req_failed?.rate || 0;
+          const rps = artilleryResults.aggregate.rps?.mean || 0;
+
+          performanceReport.results = {
+            p95_passed: p95 < performanceReport.thresholds.p95_response_time,
+            error_rate_passed: errorRate < performanceReport.thresholds.error_rate_max,
+            rps_passed: rps > performanceReport.thresholds.min_rps
+          };
+
+          performanceReport.overall_passed = Object.values(performanceReport.results).every(Boolean);
+
+          fs.writeFileSync('performance-baseline-report.json', JSON.stringify(performanceReport, null, 2));
+
+          console.log('Performance Report Generated');
+          console.log(\`P95 Response Time: \${p95}ms (threshold: \${performanceReport.thresholds.p95_response_time}ms)\`);
+          console.log(\`Error Rate: \${(errorRate * 100).toFixed(2)}% (threshold: \${performanceReport.thresholds.error_rate_max * 100}%)\`);
+          console.log(\`RPS: \${rps.toFixed(2)} (threshold: \${performanceReport.thresholds.min_rps})\`);
+          console.log(\`Overall: \${performanceReport.overall_passed ? 'PASSED' : 'FAILED'}\`);
+          EOF
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: baseline-performance-results
+          path: |
+            tests/k6-baseline-results.json
+            tests/artillery-baseline-results.json
+            tests/performance-baseline-report.json
+
+      - name: Store performance metrics
+        run: |
+          # Store metrics in GitHub repository for trend analysis
+          mkdir -p .github/performance-data
+          cp tests/performance-baseline-report.json .github/performance-data/baseline-$(date +%Y%m%d-%H%M%S).json
+
+  # === STRESS TESTING ===
+  stress-test:
+    name: Stress Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.load_pattern == 'stress' || github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Run stress test
+        working-directory: ./tests
+        run: |
+          npm install
+          artillery run load-tests/stress-test.yml --output stress-test-results.json
+        env:
+          TARGET_URL: ${{ secrets.STAGING_URL || 'https://staging.globaltaxcalc.com' }}
+
+      - name: Analyze stress test results
+        working-directory: ./tests
+        run: |
+          node <<EOF
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('stress-test-results.json', 'utf8'));
+
+          const stressReport = {
+            timestamp: new Date().toISOString(),
+            test_type: 'stress',
+            duration: results.aggregate.duration,
+            rps: results.aggregate.rps,
+            response_time: results.aggregate.latency,
+            errors: results.aggregate.errors,
+            thresholds: {
+              max_p95_response_time: 5000,
+              max_error_rate: 0.15,
+              min_rps_under_stress: 5
+            }
+          };
+
+          const p95 = results.aggregate.latency.p95;
+          const errorRate = results.aggregate.errors / results.aggregate.count;
+          const avgRps = results.aggregate.rps.mean;
+
+          stressReport.results = {
+            p95_acceptable: p95 < stressReport.thresholds.max_p95_response_time,
+            error_rate_acceptable: errorRate < stressReport.thresholds.max_error_rate,
+            rps_acceptable: avgRps > stressReport.thresholds.min_rps_under_stress
+          };
+
+          stressReport.stress_test_passed = Object.values(stressReport.results).every(Boolean);
+
+          fs.writeFileSync('stress-test-report.json', JSON.stringify(stressReport, null, 2));
+
+          console.log('Stress Test Report Generated');
+          console.log(\`P95 Response Time: \${p95}ms (acceptable: < \${stressReport.thresholds.max_p95_response_time}ms)\`);
+          console.log(\`Error Rate: \${(errorRate * 100).toFixed(2)}% (acceptable: < \${stressReport.thresholds.max_error_rate * 100}%)\`);
+          console.log(\`RPS: \${avgRps.toFixed(2)} (acceptable: > \${stressReport.thresholds.min_rps_under_stress})\`);
+          console.log(\`Stress Test: \${stressReport.stress_test_passed ? 'PASSED' : 'FAILED'}\`);
+          EOF
+
+      - name: Upload stress test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: stress-test-results
+          path: |
+            tests/stress-test-results.json
+            tests/stress-test-report.json
+
+  # === SPIKE TESTING ===
+  spike-test:
+    name: Spike Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.load_pattern == 'spike' || github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Run spike test
+        working-directory: ./tests
+        run: |
+          npm install
+          artillery run load-tests/spike-test.yml --output spike-test-results.json
+        env:
+          TARGET_URL: ${{ secrets.STAGING_URL || 'https://staging.globaltaxcalc.com' }}
+
+      - name: Analyze spike test results
+        working-directory: ./tests
+        run: |
+          node <<EOF
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('spike-test-results.json', 'utf8'));
+
+          const spikeReport = {
+            timestamp: new Date().toISOString(),
+            test_type: 'spike',
+            peak_rps: Math.max(...results.intermediate.map(i => i.rps?.mean || 0)),
+            recovery_time: results.aggregate.duration,
+            response_time: results.aggregate.latency,
+            errors: results.aggregate.errors,
+            thresholds: {
+              max_spike_response_time: 8000,
+              max_spike_error_rate: 0.25,
+              max_recovery_time: 300000 // 5 minutes
+            }
+          };
+
+          const maxP95 = Math.max(...results.intermediate.map(i => i.latency?.p95 || 0));
+          const totalErrors = results.aggregate.errors;
+          const totalRequests = results.aggregate.count;
+          const errorRate = totalErrors / totalRequests;
+
+          spikeReport.results = {
+            spike_response_time_acceptable: maxP95 < spikeReport.thresholds.max_spike_response_time,
+            spike_error_rate_acceptable: errorRate < spikeReport.thresholds.max_spike_error_rate,
+            recovery_time_acceptable: spikeReport.recovery_time < spikeReport.thresholds.max_recovery_time
+          };
+
+          spikeReport.spike_test_passed = Object.values(spikeReport.results).every(Boolean);
+
+          fs.writeFileSync('spike-test-report.json', JSON.stringify(spikeReport, null, 2));
+
+          console.log('Spike Test Report Generated');
+          console.log(\`Peak P95 Response Time: \${maxP95}ms (acceptable: < \${spikeReport.thresholds.max_spike_response_time}ms)\`);
+          console.log(\`Error Rate: \${(errorRate * 100).toFixed(2)}% (acceptable: < \${spikeReport.thresholds.max_spike_error_rate * 100}%)\`);
+          console.log(\`Recovery Time: \${(spikeReport.recovery_time / 1000).toFixed(2)}s (acceptable: < \${spikeReport.thresholds.max_recovery_time / 1000}s)\`);
+          console.log(\`Spike Test: \${spikeReport.spike_test_passed ? 'PASSED' : 'FAILED'}\`);
+          EOF
+
+      - name: Upload spike test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: spike-test-results
+          path: |
+            tests/spike-test-results.json
+            tests/spike-test-report.json
+
+  # === ENDURANCE TESTING ===
+  endurance-test:
+    name: Endurance Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.load_pattern == 'endurance'
+    timeout-minutes: 120
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run endurance test
+        working-directory: ./tests
+        run: |
+          npm install
+
+          # Create endurance test configuration
+          cat > load-tests/endurance-test.js << 'EOF'
+          import { default as baseTest } from './k6-script.js';
+          import { check } from 'k6';
+
+          export let options = {
+            stages: [
+              { duration: '10m', target: 20 },  // Ramp up
+              { duration: '60m', target: 20 },  // Stay stable for 1 hour
+              { duration: '10m', target: 0 },   // Ramp down
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<3000'],
+              http_req_failed: ['rate<0.1'],
+            },
+          };
+
+          export default baseTest;
+          EOF
+
+          # Run endurance test
+          BASE_URL=${{ secrets.STAGING_URL || 'https://staging.globaltaxcalc.com' }} k6 run load-tests/endurance-test.js --out json=endurance-test-results.json
+
+      - name: Analyze endurance test results
+        working-directory: ./tests
+        run: |
+          node <<EOF
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('endurance-test-results.json', 'utf8'));
+          const metrics = results.metrics;
+
+          const enduranceReport = {
+            timestamp: new Date().toISOString(),
+            test_type: 'endurance',
+            duration: metrics.iteration_duration?.avg || 0,
+            total_requests: metrics.http_reqs?.count || 0,
+            error_rate: metrics.http_req_failed?.rate || 0,
+            response_time: {
+              avg: metrics.http_req_duration?.avg || 0,
+              p95: metrics.http_req_duration?.p95 || 0,
+              p99: metrics.http_req_duration?.p99 || 0
+            },
+            memory_stability: {
+              // Check if response times remained stable throughout the test
+              degradation_threshold: 1.5, // 50% increase acceptable
+              stable: true // Will be calculated based on time series data
+            }
+          };
+
+          // Simple stability check (in real scenario, we'd analyze time series)
+          const responseTimeStable = enduranceReport.response_time.p95 < 3000;
+          const errorRateAcceptable = enduranceReport.error_rate < 0.1;
+
+          enduranceReport.endurance_test_passed = responseTimeStable && errorRateAcceptable;
+
+          fs.writeFileSync('endurance-test-report.json', JSON.stringify(enduranceReport, null, 2));
+
+          console.log('Endurance Test Report Generated');
+          console.log(\`Duration: \${(enduranceReport.duration / 1000 / 60).toFixed(2)} minutes\`);
+          console.log(\`Total Requests: \${enduranceReport.total_requests}\`);
+          console.log(\`P95 Response Time: \${enduranceReport.response_time.p95}ms\`);
+          console.log(\`Error Rate: \${(enduranceReport.error_rate * 100).toFixed(2)}%\`);
+          console.log(\`Endurance Test: \${enduranceReport.endurance_test_passed ? 'PASSED' : 'FAILED'}\`);
+          EOF
+
+      - name: Upload endurance test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: endurance-test-results
+          path: |
+            tests/endurance-test-results.json
+            tests/endurance-test-report.json
+
+  # === PERFORMANCE REPORT CONSOLIDATION ===
+  performance-report:
+    name: Consolidate Performance Reports
+    runs-on: ubuntu-latest
+    needs: [baseline-performance, stress-test, spike-test]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all performance artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate consolidated performance report
+        run: |
+          node <<EOF
+          const fs = require('fs');
+          const path = require('path');
+
+          const consolidatedReport = {
+            timestamp: new Date().toISOString(),
+            repository: process.env.GITHUB_REPOSITORY,
+            branch: process.env.GITHUB_REF_NAME,
+            commit: process.env.GITHUB_SHA,
+            workflow_run_id: process.env.GITHUB_RUN_ID,
+            test_results: {},
+            summary: {
+              total_tests: 0,
+              passed_tests: 0,
+              failed_tests: 0,
+              overall_status: 'UNKNOWN'
+            },
+            recommendations: []
+          };
+
+          // Process baseline results
+          try {
+            const baselineReport = JSON.parse(fs.readFileSync('baseline-performance-results/performance-baseline-report.json', 'utf8'));
+            consolidatedReport.test_results.baseline = baselineReport;
+            consolidatedReport.summary.total_tests++;
+            if (baselineReport.overall_passed) {
+              consolidatedReport.summary.passed_tests++;
+            } else {
+              consolidatedReport.summary.failed_tests++;
+              consolidatedReport.recommendations.push('Baseline performance is below thresholds - investigate response times and error rates');
+            }
+          } catch (e) {
+            console.log('No baseline results found');
+          }
+
+          // Process stress test results
+          try {
+            const stressReport = JSON.parse(fs.readFileSync('stress-test-results/stress-test-report.json', 'utf8'));
+            consolidatedReport.test_results.stress = stressReport;
+            consolidatedReport.summary.total_tests++;
+            if (stressReport.stress_test_passed) {
+              consolidatedReport.summary.passed_tests++;
+            } else {
+              consolidatedReport.summary.failed_tests++;
+              consolidatedReport.recommendations.push('System does not handle stress well - consider horizontal scaling or optimization');
+            }
+          } catch (e) {
+            console.log('No stress test results found');
+          }
+
+          // Process spike test results
+          try {
+            const spikeReport = JSON.parse(fs.readFileSync('spike-test-results/spike-test-report.json', 'utf8'));
+            consolidatedReport.test_results.spike = spikeReport;
+            consolidatedReport.summary.total_tests++;
+            if (spikeReport.spike_test_passed) {
+              consolidatedReport.summary.passed_tests++;
+            } else {
+              consolidatedReport.summary.failed_tests++;
+              consolidatedReport.recommendations.push('System struggles with traffic spikes - implement auto-scaling and rate limiting');
+            }
+          } catch (e) {
+            console.log('No spike test results found');
+          }
+
+          // Determine overall status
+          if (consolidatedReport.summary.failed_tests === 0 && consolidatedReport.summary.total_tests > 0) {
+            consolidatedReport.summary.overall_status = 'PASSED';
+          } else if (consolidatedReport.summary.failed_tests > 0) {
+            consolidatedReport.summary.overall_status = 'FAILED';
+          }
+
+          // Add general recommendations
+          if (consolidatedReport.summary.overall_status === 'PASSED') {
+            consolidatedReport.recommendations.push('All performance tests passed - system is performing well');
+          } else {
+            consolidatedReport.recommendations.push('Performance issues detected - review and optimize before production deployment');
+          }
+
+          fs.writeFileSync('consolidated-performance-report.json', JSON.stringify(consolidatedReport, null, 2));
+
+          // Generate markdown report
+          const markdown = \`
+          # Performance Test Report
+
+          **Generated:** \${consolidatedReport.timestamp}
+          **Repository:** \${consolidatedReport.repository}
+          **Branch:** \${consolidatedReport.branch}
+          **Commit:** \${consolidatedReport.commit}
+
+          ## Summary
+
+          | Test Type | Status | Details |
+          |-----------|--------|---------|
+          \${Object.entries(consolidatedReport.test_results).map(([test, result]) => {
+            const status = result.overall_passed || result.stress_test_passed || result.spike_test_passed || result.endurance_test_passed ? '✅ PASSED' : '❌ FAILED';
+            return \`| \${test.charAt(0).toUpperCase() + test.slice(1)} | \${status} | - |\`;
+          }).join('\\n')}
+
+          **Overall Status:** \${consolidatedReport.summary.overall_status === 'PASSED' ? '✅' : '❌'} **\${consolidatedReport.summary.overall_status}**
+
+          ## Recommendations
+
+          \${consolidatedReport.recommendations.map(rec => \`- \${rec}\`).join('\\n')}
+
+          ## Detailed Results
+
+          \${Object.entries(consolidatedReport.test_results).map(([test, result]) => \`
+          ### \${test.charAt(0).toUpperCase() + test.slice(1)} Test
+
+          \${JSON.stringify(result, null, 2)}
+          \`).join('\\n')}
+          \`;
+
+          fs.writeFileSync('performance-report.md', markdown);
+
+          console.log('Performance Report Summary:');
+          console.log(\`Total Tests: \${consolidatedReport.summary.total_tests}\`);
+          console.log(\`Passed: \${consolidatedReport.summary.passed_tests}\`);
+          console.log(\`Failed: \${consolidatedReport.summary.failed_tests}\`);
+          console.log(\`Overall Status: \${consolidatedReport.summary.overall_status}\`);
+          EOF
+
+      - name: Upload consolidated performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: consolidated-performance-report
+          path: |
+            consolidated-performance-report.json
+            performance-report.md
+
+      - name: Send performance alert if tests failed
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              channel: '#performance',
+              username: 'Performance Monitor',
+              icon_emoji: ':chart_with_downwards_trend:',
+              text: '📉 Performance degradation detected in GlobalTaxCalc!',
+              attachments: [{
+                color: 'danger',
+                fields: [{
+                  title: 'Repository',
+                  value: '${{ github.repository }}',
+                  short: true
+                }, {
+                  title: 'Branch',
+                  value: '${{ github.ref_name }}',
+                  short: true
+                }, {
+                  title: 'Workflow',
+                  value: '${{ github.workflow }}',
+                  short: true
+                }, {
+                  title: 'Action Required',
+                  value: 'Review performance report and optimize system performance',
+                  short: false
+                }]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Comment performance report on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('performance-report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

@@ -9,9 +9,21 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "graphql:schema": "node scripts/generate-schema.js",
+    "graphql:playground": "node scripts/playground.js",
+    "api:docs": "node scripts/generate-docs.js",
+    "api:validate": "node scripts/validate-api.js",
+    "sdk:generate": "node scripts/generate-sdks.js",
+    "analytics:report": "node scripts/analytics-report.js",
+    "migration:run": "node scripts/run-migrations.js",
+    "seed:data": "node scripts/seed-data.js"
   },
-  "keywords": ["api-gateway", "microservices", "tax-calculator"],
+  "keywords": [
+    "api-gateway",
+    "microservices",
+    "tax-calculator"
+  ],
   "author": "GlobalTaxCalc Team",
   "license": "MIT",
   "dependencies": {
@@ -31,7 +43,36 @@
     "axios": "^1.6.2",
     "uuid": "^9.0.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "@apollo/server": "^4.9.5",
+    "graphql": "^16.8.1",
+    "graphql-tag": "^2.12.6",
+    "@graphql-tools/schema": "^10.0.0",
+    "@graphql-tools/merge": "^9.0.0",
+    "@apollo/datasource-rest": "^6.2.2",
+    "@apollo/server-plugin-landing-page-graphql-playground": "^4.0.0",
+    "@apollo/server-plugin-response-cache": "^4.1.3",
+    "graphql-subscriptions": "^2.0.0",
+    "graphql-redis-subscriptions": "^2.6.0",
+    "graphql-rate-limit": "^3.3.0",
+    "dataloader": "^2.2.2",
+    "graphql-query-complexity": "^0.12.0",
+    "graphql-depth-limit": "^1.1.0",
+    "express-oauth-server": "^2.0.0",
+    "passport": "^0.7.0",
+    "passport-http-bearer": "^1.0.1",
+    "passport-oauth2": "^1.7.0",
+    "bcryptjs": "^2.4.3",
+    "crypto": "^1.0.1",
+    "validator": "^13.11.0",
+    "stripe": "^14.8.0",
+    "node-cron": "^3.0.3",
+    "csv-writer": "^1.6.0",
+    "@openapitools/openapi-generator-cli": "^2.7.0",
+    "handlebars": "^4.7.8",
+    "markdown-it": "^13.0.2",
+    "prismjs": "^1.29.0",
+    "@apidevtools/swagger-parser": "^10.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
@@ -43,5 +84,9 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
   }
 }

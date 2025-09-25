@@ -1,0 +1,229 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 300
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 120
+      arrivalRate: 50
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+
+  # Global configuration
+  timeout: 30
+
+  # Load test data
+  payload:
+    path: "./test-data/users.csv"
+    fields:
+      - "email"
+      - "password"
+      - "income"
+      - "country"
+
+  # Custom variables
+  variables:
+    countries:
+      - "US"
+      - "CA"
+      - "UK"
+      - "DE"
+      - "FR"
+    filingStatus:
+      - "single"
+      - "married"
+      - "head_of_household"
+
+  # Performance thresholds
+  ensure:
+    p95: 2000  # 95th percentile response time under 2 seconds
+    p99: 5000  # 99th percentile response time under 5 seconds
+    maxErrorRate: 5  # Error rate should be under 5%
+
+  # Plugins for enhanced metrics
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    prometheus:
+      testRunId: 'globaltaxcalc-load-test'
+
+# Main test scenarios
+scenarios:
+  - name: "User Registration and Login Flow"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "test-{{ $randomString() }}@example.com"
+            password: "TestPassword123!"
+            firstName: "Load"
+            lastName: "Test"
+            country: "{{ $randomElement(countries) }}"
+          capture:
+            - json: "$.user.id"
+              as: "userId"
+          expect:
+            - statusCode: [201, 409]  # 409 if user already exists
+
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+          expect:
+            - statusCode: 200
+            - hasProperty: "token"
+
+  - name: "Tax Calculation Workflow"
+    weight: 50
+    flow:
+      # Authentication
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Basic tax calculation
+      - post:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            income: "{{ income }}"
+            country: "{{ country }}"
+            filingStatus: "{{ $randomElement(filingStatus) }}"
+            year: 2023
+            deductions:
+              - type: "standard"
+                amount: 12950
+          capture:
+            - json: "$.calculationId"
+              as: "calculationId"
+          expect:
+            - statusCode: 201
+            - hasProperty: "result.totalTax"
+
+      # Retrieve calculation
+      - get:
+          url: "/api/calculations/{{ calculationId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # List user calculations
+      - get:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Multi-Country Comparison"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - post:
+          url: "/api/comparisons"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            scenarios:
+              - country: "US"
+                income: "{{ income }}"
+                filingStatus: "single"
+              - country: "CA"
+                income: "{{ income }}"
+                filingStatus: "single"
+              - country: "UK"
+                income: "{{ income }}"
+                filingStatus: "single"
+          expect:
+            - statusCode: 201
+            - hasProperty: "results"
+
+  - name: "Report Generation"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Create calculation first
+      - post:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            income: "{{ income }}"
+            country: "{{ country }}"
+            filingStatus: "single"
+            year: 2023
+          capture:
+            - json: "$.calculationId"
+              as: "calculationId"
+
+      # Generate report
+      - post:
+          url: "/api/reports/generate"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            calculationId: "{{ calculationId }}"
+            format: "pdf"
+            options:
+              includeCharts: true
+              template: "summary"
+          capture:
+            - json: "$.reportId"
+              as: "reportId"
+          expect:
+            - statusCode: 201
+
+      # Check report status
+      - get:
+          url: "/api/reports/{{ reportId }}/status"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Health Check and Monitoring"
+    weight: 5
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - hasProperty: "status"
+
+      - get:
+          url: "/metrics"
+          expect:
+            - statusCode: 200

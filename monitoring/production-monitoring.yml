@@ -1,0 +1,524 @@
+# Production Monitoring Configuration for GlobalTaxCalc.com
+# This file defines comprehensive monitoring setup for production environment
+
+# === PROMETHEUS CONFIGURATION ===
+prometheus:
+  global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+    external_labels:
+      environment: 'production'
+      project: 'globaltaxcalc'
+
+  # Alert manager configuration
+  alerting:
+    alertmanagers:
+      - static_configs:
+          - targets:
+            - alertmanager:9093
+
+  # Rules for alerting
+  rule_files:
+    - "alert_rules.yml"
+    - "recording_rules.yml"
+
+  # Scrape configurations
+  scrape_configs:
+    # GlobalTaxCalc Services
+    - job_name: 'api-gateway'
+      static_configs:
+        - targets: ['api-gateway:3000']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    - job_name: 'auth-service'
+      static_configs:
+        - targets: ['auth-service:3001']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    - job_name: 'tax-engine'
+      static_configs:
+        - targets: ['tax-engine:3002']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    - job_name: 'report-service'
+      static_configs:
+        - targets: ['report-service:3003']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    - job_name: 'file-service'
+      static_configs:
+        - targets: ['file-service:3004']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    - job_name: 'monitoring-service'
+      static_configs:
+        - targets: ['monitoring-service:3005']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    # Infrastructure monitoring
+    - job_name: 'node-exporter'
+      static_configs:
+        - targets: ['node-exporter:9100']
+
+    - job_name: 'postgres-exporter'
+      static_configs:
+        - targets: ['postgres-exporter:9187']
+
+    - job_name: 'redis-exporter'
+      static_configs:
+        - targets: ['redis-exporter:9121']
+
+    # Application monitoring
+    - job_name: 'blackbox'
+      metrics_path: /probe
+      params:
+        module: [http_2xx]
+      static_configs:
+        - targets:
+          - https://globaltaxcalc.com
+          - https://api.globaltaxcalc.com
+          - https://app.globaltaxcalc.com
+      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: blackbox-exporter:9115
+
+# === GRAFANA CONFIGURATION ===
+grafana:
+  datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus:9090
+      isDefault: true
+      jsonData:
+        timeInterval: "15s"
+
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+
+  dashboards:
+    - name: "GlobalTaxCalc - System Overview"
+      uid: "globaltaxcalc-overview"
+      file: "./dashboards/system-overview.json"
+
+    - name: "GlobalTaxCalc - Service Details"
+      uid: "globaltaxcalc-services"
+      file: "./dashboards/service-specific.json"
+
+    - name: "GlobalTaxCalc - Business Metrics"
+      uid: "globaltaxcalc-business"
+      file: "./dashboards/business-metrics.json"
+
+    - name: "GlobalTaxCalc - Infrastructure"
+      uid: "globaltaxcalc-infrastructure"
+      file: "./dashboards/infrastructure.json"
+
+  alerting:
+    notification_channels:
+      - name: "slack-alerts"
+        type: "slack"
+        settings:
+          url: "${SLACK_WEBHOOK_URL}"
+          channel: "#alerts"
+          username: "Grafana"
+
+      - name: "email-alerts"
+        type: "email"
+        settings:
+          addresses: "admin@globaltaxcalc.com,ops@globaltaxcalc.com"
+
+      - name: "pagerduty-critical"
+        type: "pagerduty"
+        settings:
+          integrationKey: "${PAGERDUTY_INTEGRATION_KEY}"
+          severity: "critical"
+
+# === ALERTMANAGER CONFIGURATION ===
+alertmanager:
+  global:
+    smtp_smarthost: 'localhost:587'
+    smtp_from: 'alerts@globaltaxcalc.com'
+    slack_api_url: "${SLACK_WEBHOOK_URL}"
+
+  # Routing tree
+  route:
+    group_by: ['alertname', 'severity']
+    group_wait: 10s
+    group_interval: 10s
+    repeat_interval: 12h
+    receiver: 'web.hook'
+    routes:
+      - match:
+          severity: critical
+        receiver: 'critical-alerts'
+        continue: true
+
+      - match:
+          severity: warning
+        receiver: 'warning-alerts'
+
+      - match:
+          alertname: 'DeadMansSwitch'
+        receiver: 'deadmansswitch'
+        repeat_interval: 5m
+
+  # Alert receivers
+  receivers:
+    - name: 'web.hook'
+      webhook_configs:
+        - url: 'http://monitoring-service:3005/api/alerts/webhook'
+          send_resolved: true
+
+    - name: 'critical-alerts'
+      slack_configs:
+        - api_url: "${SLACK_WEBHOOK_URL}"
+          channel: '#critical-alerts'
+          title: '🚨 CRITICAL ALERT - GlobalTaxCalc'
+          text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+          send_resolved: true
+
+      email_configs:
+        - to: 'admin@globaltaxcalc.com,ops@globaltaxcalc.com'
+          subject: 'CRITICAL: {{ template "email.default.subject" . }}'
+          body: |
+            {{ range .Alerts }}
+            Alert: {{ .Annotations.summary }}
+            Description: {{ .Annotations.description }}
+            Service: {{ .Labels.service }}
+            Severity: {{ .Labels.severity }}
+            {{ end }}
+
+      pagerduty_configs:
+        - routing_key: "${PAGERDUTY_INTEGRATION_KEY}"
+          description: "{{ .CommonAnnotations.summary }}"
+          severity: "critical"
+
+    - name: 'warning-alerts'
+      slack_configs:
+        - api_url: "${SLACK_WEBHOOK_URL}"
+          channel: '#alerts'
+          title: '⚠️ Warning - GlobalTaxCalc'
+          text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+          send_resolved: true
+
+    - name: 'deadmansswitch'
+      webhook_configs:
+        - url: 'https://deadmanssnitch.com/check-ins/${DEADMANSSWITCH_URL}'
+          send_resolved: false
+
+  # Inhibition rules
+  inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'service']
+
+# === UPTIME MONITORING ===
+uptime_monitoring:
+  # External monitoring services
+  pingdom:
+    checks:
+      - name: "GlobalTaxCalc Homepage"
+        url: "https://globaltaxcalc.com"
+        resolution: 1
+        type: "http"
+
+      - name: "GlobalTaxCalc API"
+        url: "https://api.globaltaxcalc.com/health"
+        resolution: 1
+        type: "http"
+
+      - name: "GlobalTaxCalc App"
+        url: "https://app.globaltaxcalc.com"
+        resolution: 1
+        type: "http"
+
+  # Synthetic monitoring
+  synthetic_tests:
+    - name: "User Registration Flow"
+      type: "multi_step"
+      steps:
+        - type: "http"
+          url: "https://api.globaltaxcalc.com/health"
+          expected_status: 200
+        - type: "http"
+          url: "https://api.globaltaxcalc.com/api/auth/register"
+          method: "POST"
+          body: |
+            {
+              "email": "test@example.com",
+              "password": "TestPassword123!",
+              "firstName": "Test",
+              "lastName": "User"
+            }
+          expected_status: [201, 409]
+
+    - name: "Tax Calculation Flow"
+      type: "multi_step"
+      steps:
+        - type: "http"
+          url: "https://api.globaltaxcalc.com/api/auth/login"
+          method: "POST"
+          body: |
+            {
+              "email": "test@globaltaxcalc.com",
+              "password": "${TEST_USER_PASSWORD}"
+            }
+        - type: "http"
+          url: "https://api.globaltaxcalc.com/api/calculations"
+          method: "POST"
+          headers:
+            Authorization: "Bearer ${auth_token}"
+          body: |
+            {
+              "income": 75000,
+              "country": "US",
+              "filingStatus": "single",
+              "year": 2023
+            }
+          expected_status: 201
+
+# === LOG AGGREGATION ===
+log_aggregation:
+  loki:
+    config:
+      auth_enabled: false
+      server:
+        http_listen_port: 3100
+
+      ingester:
+        lifecycler:
+          address: 127.0.0.1
+          ring:
+            kvstore:
+              store: inmemory
+            replication_factor: 1
+        chunk_idle_period: 5m
+        chunk_retain_period: 30s
+
+      schema_config:
+        configs:
+          - from: 2020-10-24
+            store: boltdb
+            object_store: filesystem
+            schema: v11
+            index:
+              prefix: index_
+              period: 168h
+
+      storage_config:
+        boltdb:
+          directory: /loki/index
+        filesystem:
+          directory: /loki/chunks
+
+      limits_config:
+        enforce_metric_name: false
+        reject_old_samples: true
+        reject_old_samples_max_age: 168h
+
+  promtail:
+    config:
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+
+      positions:
+        filename: /tmp/positions.yaml
+
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+
+      scrape_configs:
+        - job_name: globaltaxcalc-logs
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: globaltaxcalc
+                __path__: /var/log/globaltaxcalc/*.log
+
+# === BUSINESS METRICS MONITORING ===
+business_metrics:
+  # Key Performance Indicators
+  kpis:
+    - name: "Daily Active Users"
+      query: "sum(increase(globaltaxcalc_user_logins_total[24h]))"
+      threshold: 100
+      alert_on: "below"
+
+    - name: "Tax Calculations Per Day"
+      query: "sum(increase(globaltaxcalc_business_calculations_total[24h]))"
+      threshold: 500
+      alert_on: "below"
+
+    - name: "Revenue Per Day"
+      query: "sum(globaltaxcalc_business_revenue_total)"
+      threshold: 1000
+      alert_on: "below"
+
+    - name: "Conversion Rate"
+      query: "sum(rate(globaltaxcalc_business_conversions_total[1h])) / sum(rate(globaltaxcalc_http_requests_total{route='/api/calculations'}[1h])) * 100"
+      threshold: 5
+      alert_on: "below"
+
+    - name: "Average Response Time"
+      query: "histogram_quantile(0.95, sum(rate(globaltaxcalc_http_request_duration_seconds_bucket[5m])) by (le))"
+      threshold: 2
+      alert_on: "above"
+
+    - name: "Error Rate"
+      query: "sum(rate(globaltaxcalc_http_requests_total{status_code!~'2..'}[5m])) / sum(rate(globaltaxcalc_http_requests_total[5m])) * 100"
+      threshold: 5
+      alert_on: "above"
+
+# === INFRASTRUCTURE MONITORING ===
+infrastructure_monitoring:
+  # System metrics
+  system_alerts:
+    - name: "High CPU Usage"
+      query: "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode='idle'}[5m])) * 100) > 80"
+      duration: "5m"
+      severity: "warning"
+
+    - name: "High Memory Usage"
+      query: "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85"
+      duration: "5m"
+      severity: "warning"
+
+    - name: "Disk Space Low"
+      query: "(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90"
+      duration: "5m"
+      severity: "critical"
+
+    - name: "High Network Traffic"
+      query: "rate(node_network_receive_bytes_total[5m]) > 100000000"
+      duration: "5m"
+      severity: "warning"
+
+  # Database monitoring
+  database_alerts:
+    - name: "PostgreSQL Down"
+      query: "pg_up == 0"
+      duration: "1m"
+      severity: "critical"
+
+    - name: "High Database Connections"
+      query: "pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80"
+      duration: "5m"
+      severity: "warning"
+
+    - name: "Slow Database Queries"
+      query: "pg_stat_activity_max_tx_duration > 300"
+      duration: "2m"
+      severity: "warning"
+
+  # Redis monitoring
+  redis_alerts:
+    - name: "Redis Down"
+      query: "redis_up == 0"
+      duration: "1m"
+      severity: "critical"
+
+    - name: "High Redis Memory Usage"
+      query: "redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90"
+      duration: "5m"
+      severity: "warning"
+
+# === SECURITY MONITORING ===
+security_monitoring:
+  # Security alerts
+  security_alerts:
+    - name: "High Authentication Failures"
+      query: "sum(rate(globaltaxcalc_auth_failures_total[5m])) > 10"
+      duration: "2m"
+      severity: "warning"
+
+    - name: "Potential DDoS Attack"
+      query: "sum(rate(globaltaxcalc_http_requests_total[1m])) > 1000"
+      duration: "2m"
+      severity: "critical"
+
+    - name: "Unusual Error Rate Spike"
+      query: "sum(rate(globaltaxcalc_http_requests_total{status_code!~'2..'}[5m])) > 50"
+      duration: "2m"
+      severity: "warning"
+
+    - name: "Failed File Uploads"
+      query: "sum(rate(globaltaxcalc_file_upload_failures_total[5m])) > 5"
+      duration: "5m"
+      severity: "warning"
+
+# === NOTIFICATION CHANNELS ===
+notification_channels:
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channels:
+      critical: "#critical-alerts"
+      warning: "#alerts"
+      info: "#monitoring"
+
+  email:
+    smtp_server: "${SMTP_HOST}"
+    smtp_port: 587
+    smtp_user: "${SMTP_USER}"
+    smtp_password: "${SMTP_PASSWORD}"
+    recipients:
+      critical: ["admin@globaltaxcalc.com", "ops@globaltaxcalc.com"]
+      warning: ["ops@globaltaxcalc.com"]
+
+  pagerduty:
+    integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+    routing_key: "${PAGERDUTY_ROUTING_KEY}"
+
+  sms:
+    twilio_account_sid: "${TWILIO_ACCOUNT_SID}"
+    twilio_auth_token: "${TWILIO_AUTH_TOKEN}"
+    from_phone: "${TWILIO_FROM_PHONE}"
+    recipients:
+      - "+1234567890"  # Admin phone
+      - "+0987654321"  # Ops phone
+
+# === ESCALATION POLICIES ===
+escalation_policies:
+  critical_issues:
+    - level: 1
+      notify: ["ops@globaltaxcalc.com"]
+      timeout: 300  # 5 minutes
+    - level: 2
+      notify: ["admin@globaltaxcalc.com", "ops@globaltaxcalc.com"]
+      timeout: 600  # 10 minutes
+    - level: 3
+      notify: ["pagerduty", "sms"]
+      timeout: 900  # 15 minutes
+
+  warning_issues:
+    - level: 1
+      notify: ["ops@globaltaxcalc.com"]
+      timeout: 1800  # 30 minutes
+    - level: 2
+      notify: ["admin@globaltaxcalc.com"]
+      timeout: 3600  # 1 hour
+
+# === MAINTENANCE WINDOWS ===
+maintenance_windows:
+  - name: "Weekly Maintenance"
+    schedule: "0 2 * * 0"  # Sunday 2 AM UTC
+    duration: 120  # 2 hours
+    suppress_alerts: true
+
+  - name: "Monthly Patching"
+    schedule: "0 1 1 * *"  # First day of month 1 AM UTC
+    duration: 240  # 4 hours
+    suppress_alerts: true

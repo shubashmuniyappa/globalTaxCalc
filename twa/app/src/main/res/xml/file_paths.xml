@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Internal storage paths -->
+    <files-path name="my_files" path="." />
+    <cache-path name="my_cache" path="." />
+
+    <!-- External storage paths -->
+    <external-files-path name="external_files" path="." />
+    <external-cache-path name="external_cache" path="." />
+
+    <!-- Specific paths for tax calculation exports -->
+    <files-path name="calculations" path="calculations/" />
+    <cache-path name="temp_exports" path="exports/" />
+
+    <!-- Media sharing paths -->
+    <external-files-path name="exports" path="exports/" />
+    <external-files-path name="downloads" path="Download/" />
+</paths>

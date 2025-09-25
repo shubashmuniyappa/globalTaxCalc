@@ -1,0 +1,1123 @@
+"""
+Advanced Data Warehousing Solution for GlobalTaxCalc
+Provides comprehensive data warehousing capabilities including ETL, data modeling,
+and analytics-ready data structures using Apache Spark and modern data architecture
+"""
+
+import pandas as pd
+import numpy as np
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.window import Window
+import sqlite3
+import psycopg2
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime, Float, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import boto3
+from datetime import datetime, timedelta
+import logging
+import json
+import yaml
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
+import hashlib
+import uuid
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+Base = declarative_base()
+
+@dataclass
+class ETLJobConfig:
+    """Configuration for ETL jobs"""
+    job_name: str
+    source_type: str  # 'database', 'file', 'api', 'streaming'
+    source_config: Dict[str, Any]
+    target_type: str
+    target_config: Dict[str, Any]
+    transformation_rules: List[Dict[str, Any]]
+    schedule: Optional[str] = None  # Cron expression
+    incremental: bool = True
+    quality_checks: List[Dict[str, Any]] = None
+
+@dataclass
+class DataQualityRule:
+    """Data quality rule configuration"""
+    rule_name: str
+    rule_type: str  # 'completeness', 'uniqueness', 'validity', 'consistency'
+    column: str
+    threshold: float
+    condition: str
+    action: str  # 'warn', 'fail', 'fix'
+
+class DataWarehouseEngine:
+    """Advanced Data Warehousing Engine"""
+
+    def __init__(self, config_path: str = None):
+        self.spark = None
+        self.engines = {}  # Database engines
+        self.etl_jobs = {}
+        self.data_models = {}
+        self.quality_rules = {}
+        self.job_history = []
+
+        # Initialize Spark
+        self._initialize_spark()
+
+        # Load configuration
+        if config_path:
+            self.load_config(config_path)
+        else:
+            self._initialize_default_config()
+
+    def _initialize_spark(self):
+        """Initialize Spark session"""
+        try:
+            self.spark = SparkSession.builder \
+                .appName("GlobalTaxCalc-DataWarehouse") \
+                .config("spark.sql.adaptive.enabled", "true") \
+                .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
+                .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse") \
+                .getOrCreate()
+
+            # Set log level to reduce verbosity
+            self.spark.sparkContext.setLogLevel("WARN")
+            logger.info("Spark session initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Spark: {str(e)}")
+            raise
+
+    def _initialize_default_config(self):
+        """Initialize default data warehouse configuration"""
+
+        # User data ETL job
+        self.etl_jobs['user_data_etl'] = ETLJobConfig(
+            job_name='user_data_etl',
+            source_type='database',
+            source_config={
+                'connection_string': 'postgresql://user:password@localhost:5432/production',
+                'table': 'users',
+                'timestamp_column': 'updated_at'
+            },
+            target_type='warehouse',
+            target_config={
+                'schema': 'dimension',
+                'table': 'dim_users'
+            },
+            transformation_rules=[
+                {
+                    'type': 'column_mapping',
+                    'mapping': {
+                        'id': 'user_id',
+                        'email': 'email_address',
+                        'created_at': 'registration_date'
+                    }
+                },
+                {
+                    'type': 'data_type_conversion',
+                    'conversions': {
+                        'registration_date': 'timestamp',
+                        'is_premium': 'boolean'
+                    }
+                },
+                {
+                    'type': 'derived_columns',
+                    'columns': {
+                        'user_age_days': 'datediff(current_date(), registration_date)',
+                        'is_new_user': 'user_age_days <= 30',
+                        'user_segment': 'case when is_premium then "premium" else "free" end'
+                    }
+                }
+            ],
+            incremental=True,
+            quality_checks=[
+                {
+                    'type': 'completeness',
+                    'column': 'user_id',
+                    'threshold': 1.0
+                },
+                {
+                    'type': 'uniqueness',
+                    'column': 'user_id',
+                    'threshold': 1.0
+                }
+            ]
+        )
+
+        # Tax calculation facts ETL job
+        self.etl_jobs['tax_calculations_etl'] = ETLJobConfig(
+            job_name='tax_calculations_etl',
+            source_type='database',
+            source_config={
+                'connection_string': 'postgresql://user:password@localhost:5432/production',
+                'table': 'tax_calculations',
+                'timestamp_column': 'created_at'
+            },
+            target_type='warehouse',
+            target_config={
+                'schema': 'fact',
+                'table': 'fact_tax_calculations'
+            },
+            transformation_rules=[
+                {
+                    'type': 'column_mapping',
+                    'mapping': {
+                        'id': 'calculation_id',
+                        'user_id': 'user_id',
+                        'income': 'gross_income',
+                        'federal_tax': 'federal_tax_amount',
+                        'state_tax': 'state_tax_amount'
+                    }
+                },
+                {
+                    'type': 'derived_columns',
+                    'columns': {
+                        'total_tax': 'federal_tax_amount + state_tax_amount',
+                        'effective_tax_rate': '(federal_tax_amount + state_tax_amount) / gross_income',
+                        'calculation_date': 'date(created_at)',
+                        'calculation_year': 'year(created_at)',
+                        'calculation_month': 'month(created_at)',
+                        'is_tax_season': 'month(created_at) in (1,2,3,4)'
+                    }
+                },
+                {
+                    'type': 'data_quality_fixes',
+                    'fixes': {
+                        'gross_income': 'case when gross_income < 0 then 0 else gross_income end',
+                        'effective_tax_rate': 'case when effective_tax_rate > 1 then null else effective_tax_rate end'
+                    }
+                }
+            ],
+            incremental=True,
+            quality_checks=[
+                {
+                    'type': 'validity',
+                    'column': 'gross_income',
+                    'condition': 'gross_income >= 0',
+                    'threshold': 0.95
+                },
+                {
+                    'type': 'validity',
+                    'column': 'effective_tax_rate',
+                    'condition': 'effective_tax_rate between 0 and 1',
+                    'threshold': 0.9
+                }
+            ]
+        )
+
+        # Session analytics ETL job
+        self.etl_jobs['session_analytics_etl'] = ETLJobConfig(
+            job_name='session_analytics_etl',
+            source_type='file',
+            source_config={
+                'path': '/data/logs/session_logs/*.json',
+                'format': 'json',
+                'timestamp_column': 'session_start'
+            },
+            target_type='warehouse',
+            target_config={
+                'schema': 'fact',
+                'table': 'fact_user_sessions'
+            },
+            transformation_rules=[
+                {
+                    'type': 'json_parsing',
+                    'nested_fields': [
+                        'session_data.pages_visited',
+                        'session_data.actions_performed',
+                        'device_info.browser',
+                        'device_info.os'
+                    ]
+                },
+                {
+                    'type': 'derived_columns',
+                    'columns': {
+                        'session_duration_minutes': 'session_duration / 60',
+                        'pages_per_minute': 'pages_visited / (session_duration / 60)',
+                        'bounce_session': 'pages_visited <= 1',
+                        'engaged_session': 'session_duration >= 180'  # 3 minutes
+                    }
+                }
+            ],
+            incremental=True
+        )
+
+        # Initialize data quality rules
+        self._initialize_quality_rules()
+
+    def _initialize_quality_rules(self):
+        """Initialize data quality rules"""
+
+        self.quality_rules['user_data_quality'] = [
+            DataQualityRule(
+                rule_name='user_id_completeness',
+                rule_type='completeness',
+                column='user_id',
+                threshold=1.0,
+                condition='user_id is not null',
+                action='fail'
+            ),
+            DataQualityRule(
+                rule_name='email_format_validity',
+                rule_type='validity',
+                column='email_address',
+                threshold=0.95,
+                condition='email_address rlike "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"',
+                action='warn'
+            ),
+            DataQualityRule(
+                rule_name='registration_date_validity',
+                rule_type='validity',
+                column='registration_date',
+                threshold=1.0,
+                condition='registration_date <= current_date()',
+                action='fail'
+            )
+        ]
+
+        self.quality_rules['tax_calculation_quality'] = [
+            DataQualityRule(
+                rule_name='income_validity',
+                rule_type='validity',
+                column='gross_income',
+                threshold=0.95,
+                condition='gross_income >= 0 and gross_income <= 10000000',
+                action='warn'
+            ),
+            DataQualityRule(
+                rule_name='tax_rate_consistency',
+                rule_type='consistency',
+                column='effective_tax_rate',
+                threshold=0.9,
+                condition='effective_tax_rate between 0 and 0.5',
+                action='warn'
+            ),
+            DataQualityRule(
+                rule_name='calculation_id_uniqueness',
+                rule_type='uniqueness',
+                column='calculation_id',
+                threshold=1.0,
+                condition='count(calculation_id) = count(distinct calculation_id)',
+                action='fail'
+            )
+        ]
+
+    def create_database_engine(self, name: str, connection_string: str):
+        """Create database engine for data sources/targets"""
+        try:
+            from sqlalchemy import create_engine
+            engine = create_engine(connection_string)
+            self.engines[name] = engine
+            logger.info(f"Database engine '{name}' created successfully")
+            return engine
+        except Exception as e:
+            logger.error(f"Failed to create database engine '{name}': {str(e)}")
+            raise
+
+    def run_etl_job(self, job_name: str, execution_date: datetime = None) -> Dict[str, Any]:
+        """Execute ETL job"""
+        try:
+            if job_name not in self.etl_jobs:
+                raise ValueError(f"ETL job '{job_name}' not found")
+
+            job_config = self.etl_jobs[job_name]
+            execution_date = execution_date or datetime.now()
+
+            logger.info(f"Starting ETL job: {job_name}")
+
+            # Create job execution record
+            job_execution = {
+                'job_name': job_name,
+                'execution_id': str(uuid.uuid4()),
+                'start_time': execution_date,
+                'status': 'running',
+                'records_processed': 0,
+                'records_loaded': 0,
+                'data_quality_results': {},
+                'errors': []
+            }
+
+            # Extract data
+            source_df = self._extract_data(job_config, execution_date)
+            job_execution['records_extracted'] = source_df.count()
+
+            # Transform data
+            transformed_df = self._transform_data(source_df, job_config)
+            job_execution['records_processed'] = transformed_df.count()
+
+            # Data quality checks
+            quality_results = self._run_data_quality_checks(transformed_df, job_config)
+            job_execution['data_quality_results'] = quality_results
+
+            # Check if quality checks passed
+            if not self._quality_checks_passed(quality_results):
+                job_execution['status'] = 'failed'
+                job_execution['errors'].append('Data quality checks failed')
+                logger.error(f"ETL job {job_name} failed data quality checks")
+                return job_execution
+
+            # Load data
+            load_result = self._load_data(transformed_df, job_config)
+            job_execution['records_loaded'] = load_result.get('records_loaded', 0)
+
+            # Update job status
+            job_execution['status'] = 'completed'
+            job_execution['end_time'] = datetime.now()
+            job_execution['duration_seconds'] = (job_execution['end_time'] - job_execution['start_time']).total_seconds()
+
+            # Store job history
+            self.job_history.append(job_execution)
+
+            logger.info(f"ETL job {job_name} completed successfully. Processed {job_execution['records_processed']} records")
+
+            return job_execution
+
+        except Exception as e:
+            logger.error(f"ETL job {job_name} failed: {str(e)}")
+            job_execution['status'] = 'failed'
+            job_execution['end_time'] = datetime.now()
+            job_execution['errors'].append(str(e))
+            self.job_history.append(job_execution)
+            return job_execution
+
+    def _extract_data(self, job_config: ETLJobConfig, execution_date: datetime):
+        """Extract data from source"""
+        source_type = job_config.source_type
+        source_config = job_config.source_config
+
+        if source_type == 'database':
+            return self._extract_from_database(source_config, job_config.incremental, execution_date)
+        elif source_type == 'file':
+            return self._extract_from_file(source_config)
+        elif source_type == 'api':
+            return self._extract_from_api(source_config)
+        else:
+            raise ValueError(f"Unsupported source type: {source_type}")
+
+    def _extract_from_database(self, config: Dict[str, Any], incremental: bool, execution_date: datetime):
+        """Extract data from database"""
+        connection_string = config['connection_string']
+        table = config['table']
+
+        # Build query
+        query = f"SELECT * FROM {table}"
+
+        if incremental and 'timestamp_column' in config:
+            # For incremental load, get data from last successful run
+            last_run_date = self._get_last_successful_run_date(config.get('job_name', ''))
+            if last_run_date:
+                timestamp_col = config['timestamp_column']
+                query += f" WHERE {timestamp_col} > '{last_run_date}'"
+
+        # Read data using Spark
+        df = self.spark.read \
+            .format("jdbc") \
+            .option("url", connection_string) \
+            .option("query", query) \
+            .option("driver", "org.postgresql.Driver") \
+            .load()
+
+        return df
+
+    def _extract_from_file(self, config: Dict[str, Any]):
+        """Extract data from files"""
+        path = config['path']
+        file_format = config.get('format', 'json')
+
+        if file_format == 'json':
+            df = self.spark.read.json(path)
+        elif file_format == 'csv':
+            df = self.spark.read.csv(path, header=True, inferSchema=True)
+        elif file_format == 'parquet':
+            df = self.spark.read.parquet(path)
+        else:
+            raise ValueError(f"Unsupported file format: {file_format}")
+
+        return df
+
+    def _extract_from_api(self, config: Dict[str, Any]):
+        """Extract data from API (simplified implementation)"""
+        # This would typically involve making API calls and converting to Spark DataFrame
+        # For now, return empty DataFrame
+        schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("data", StringType(), True)
+        ])
+        return self.spark.createDataFrame([], schema)
+
+    def _transform_data(self, df, job_config: ETLJobConfig):
+        """Apply transformations to data"""
+        transformed_df = df
+
+        for rule in job_config.transformation_rules:
+            rule_type = rule['type']
+
+            if rule_type == 'column_mapping':
+                # Rename columns
+                mapping = rule['mapping']
+                for old_col, new_col in mapping.items():
+                    if old_col in transformed_df.columns:
+                        transformed_df = transformed_df.withColumnRenamed(old_col, new_col)
+
+            elif rule_type == 'data_type_conversion':
+                # Convert data types
+                conversions = rule['conversions']
+                for col_name, target_type in conversions.items():
+                    if col_name in transformed_df.columns:
+                        if target_type == 'timestamp':
+                            transformed_df = transformed_df.withColumn(col_name, col(col_name).cast(TimestampType()))
+                        elif target_type == 'boolean':
+                            transformed_df = transformed_df.withColumn(col_name, col(col_name).cast(BooleanType()))
+                        elif target_type == 'double':
+                            transformed_df = transformed_df.withColumn(col_name, col(col_name).cast(DoubleType()))
+
+            elif rule_type == 'derived_columns':
+                # Add derived columns
+                columns = rule['columns']
+                for col_name, expression in columns.items():
+                    transformed_df = transformed_df.withColumn(col_name, expr(expression))
+
+            elif rule_type == 'data_quality_fixes':
+                # Apply data quality fixes
+                fixes = rule['fixes']
+                for col_name, fix_expression in fixes.items():
+                    if col_name in transformed_df.columns:
+                        transformed_df = transformed_df.withColumn(col_name, expr(fix_expression))
+
+            elif rule_type == 'filtering':
+                # Apply filters
+                filter_condition = rule['condition']
+                transformed_df = transformed_df.filter(expr(filter_condition))
+
+            elif rule_type == 'aggregation':
+                # Apply aggregations
+                group_by_cols = rule['group_by']
+                agg_expressions = rule['aggregations']
+                transformed_df = transformed_df.groupBy(*group_by_cols).agg(*[expr(agg) for agg in agg_expressions])
+
+            elif rule_type == 'json_parsing':
+                # Parse nested JSON fields
+                nested_fields = rule['nested_fields']
+                for field_path in nested_fields:
+                    parts = field_path.split('.')
+                    col_name = parts[-1]
+                    json_path = '.'.join(parts[:-1])
+                    transformed_df = transformed_df.withColumn(col_name, get_json_object(col(parts[0]), f'$.{".".join(parts[1:])}'))
+
+        return transformed_df
+
+    def _run_data_quality_checks(self, df, job_config: ETLJobConfig) -> Dict[str, Any]:
+        """Run data quality checks on DataFrame"""
+        if not job_config.quality_checks:
+            return {'status': 'passed', 'checks': []}
+
+        quality_results = {'status': 'passed', 'checks': []}
+
+        for check in job_config.quality_checks:
+            check_type = check['type']
+            column = check.get('column')
+            threshold = check.get('threshold', 1.0)
+
+            result = {
+                'check_name': f"{check_type}_{column}",
+                'check_type': check_type,
+                'column': column,
+                'threshold': threshold,
+                'status': 'passed',
+                'score': 1.0,
+                'details': {}
+            }
+
+            total_records = df.count()
+
+            if check_type == 'completeness':
+                # Check for null values
+                null_count = df.filter(col(column).isNull()).count()
+                completeness_score = 1.0 - (null_count / total_records) if total_records > 0 else 0
+                result['score'] = completeness_score
+                result['details'] = {
+                    'total_records': total_records,
+                    'null_records': null_count,
+                    'completeness_rate': completeness_score
+                }
+
+                if completeness_score < threshold:
+                    result['status'] = 'failed'
+                    quality_results['status'] = 'failed'
+
+            elif check_type == 'uniqueness':
+                # Check for duplicate values
+                distinct_count = df.select(column).distinct().count()
+                uniqueness_score = distinct_count / total_records if total_records > 0 else 0
+                result['score'] = uniqueness_score
+                result['details'] = {
+                    'total_records': total_records,
+                    'distinct_records': distinct_count,
+                    'uniqueness_rate': uniqueness_score
+                }
+
+                if uniqueness_score < threshold:
+                    result['status'] = 'failed'
+                    quality_results['status'] = 'failed'
+
+            elif check_type == 'validity':
+                # Check validity condition
+                condition = check.get('condition', 'true')
+                valid_count = df.filter(expr(condition)).count()
+                validity_score = valid_count / total_records if total_records > 0 else 0
+                result['score'] = validity_score
+                result['details'] = {
+                    'total_records': total_records,
+                    'valid_records': valid_count,
+                    'validity_rate': validity_score,
+                    'condition': condition
+                }
+
+                if validity_score < threshold:
+                    result['status'] = 'failed'
+                    quality_results['status'] = 'failed'
+
+            quality_results['checks'].append(result)
+
+        return quality_results
+
+    def _quality_checks_passed(self, quality_results: Dict[str, Any]) -> bool:
+        """Check if all quality checks passed"""
+        if quality_results['status'] == 'failed':
+            return False
+
+        for check in quality_results['checks']:
+            if check['status'] == 'failed':
+                return False
+
+        return True
+
+    def _load_data(self, df, job_config: ETLJobConfig) -> Dict[str, Any]:
+        """Load data to target"""
+        target_type = job_config.target_type
+        target_config = job_config.target_config
+
+        if target_type == 'warehouse':
+            return self._load_to_warehouse(df, target_config)
+        elif target_type == 'file':
+            return self._load_to_file(df, target_config)
+        elif target_type == 'database':
+            return self._load_to_database(df, target_config)
+        else:
+            raise ValueError(f"Unsupported target type: {target_type}")
+
+    def _load_to_warehouse(self, df, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Load data to data warehouse"""
+        schema = config['schema']
+        table = config['table']
+
+        # Write to warehouse (using Delta Lake format for ACID transactions)
+        warehouse_path = f"/warehouse/{schema}/{table}"
+
+        df.write \
+            .format("delta") \
+            .mode("overwrite") \
+            .option("overwriteSchema", "true") \
+            .save(warehouse_path)
+
+        # Also create/update Spark SQL table
+        df.createOrReplaceTempView(f"{schema}_{table}")
+
+        return {'records_loaded': df.count(), 'target': f"{schema}.{table}"}
+
+    def _load_to_file(self, df, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Load data to file"""
+        path = config['path']
+        file_format = config.get('format', 'parquet')
+        mode = config.get('mode', 'overwrite')
+
+        if file_format == 'parquet':
+            df.write.mode(mode).parquet(path)
+        elif file_format == 'csv':
+            df.write.mode(mode).csv(path, header=True)
+        elif file_format == 'json':
+            df.write.mode(mode).json(path)
+
+        return {'records_loaded': df.count(), 'target': path}
+
+    def _load_to_database(self, df, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Load data to database"""
+        connection_string = config['connection_string']
+        table = config['table']
+        mode = config.get('mode', 'overwrite')
+
+        df.write \
+            .format("jdbc") \
+            .option("url", connection_string) \
+            .option("dbtable", table) \
+            .option("driver", "org.postgresql.Driver") \
+            .mode(mode) \
+            .save()
+
+        return {'records_loaded': df.count(), 'target': table}
+
+    def create_dimensional_model(self, model_name: str, model_config: Dict[str, Any]):
+        """Create dimensional data model (star schema)"""
+
+        # Create dimension tables
+        dimensions = model_config.get('dimensions', {})
+        for dim_name, dim_config in dimensions.items():
+            self._create_dimension_table(dim_name, dim_config)
+
+        # Create fact tables
+        facts = model_config.get('facts', {})
+        for fact_name, fact_config in facts.items():
+            self._create_fact_table(fact_name, fact_config)
+
+        self.data_models[model_name] = model_config
+        logger.info(f"Dimensional model '{model_name}' created successfully")
+
+    def _create_dimension_table(self, dim_name: str, dim_config: Dict[str, Any]):
+        """Create dimension table"""
+        columns = dim_config['columns']
+        scd_type = dim_config.get('scd_type', 1)  # Slowly Changing Dimension type
+
+        # Build CREATE TABLE SQL
+        column_definitions = []
+        for col_name, col_config in columns.items():
+            data_type = col_config['type']
+            nullable = col_config.get('nullable', True)
+            null_clause = "" if nullable else "NOT NULL"
+            column_definitions.append(f"{col_name} {data_type} {null_clause}")
+
+        # Add SCD columns if Type 2
+        if scd_type == 2:
+            column_definitions.extend([
+                "effective_date DATE NOT NULL",
+                "expiry_date DATE",
+                "is_current BOOLEAN DEFAULT TRUE"
+            ])
+
+        sql = f"""
+        CREATE TABLE IF NOT EXISTS dim_{dim_name} (
+            {dim_name}_key BIGINT PRIMARY KEY,
+            {', '.join(column_definitions)},
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+
+        # Execute using Spark SQL
+        self.spark.sql(sql)
+
+    def _create_fact_table(self, fact_name: str, fact_config: Dict[str, Any]):
+        """Create fact table"""
+        dimensions = fact_config['dimensions']  # Foreign keys to dimensions
+        measures = fact_config['measures']  # Numeric measures
+
+        column_definitions = []
+
+        # Add dimension keys
+        for dim in dimensions:
+            column_definitions.append(f"{dim}_key BIGINT NOT NULL")
+
+        # Add measures
+        for measure_name, measure_config in measures.items():
+            data_type = measure_config['type']
+            nullable = measure_config.get('nullable', True)
+            null_clause = "" if nullable else "NOT NULL"
+            column_definitions.append(f"{measure_name} {data_type} {null_clause}")
+
+        sql = f"""
+        CREATE TABLE IF NOT EXISTS fact_{fact_name} (
+            {fact_name}_key BIGINT PRIMARY KEY,
+            {', '.join(column_definitions)},
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+
+        # Execute using Spark SQL
+        self.spark.sql(sql)
+
+    def run_data_profiling(self, table_name: str, schema: str = None) -> Dict[str, Any]:
+        """Run comprehensive data profiling"""
+        try:
+            # Read table
+            if schema:
+                full_table_name = f"{schema}.{table_name}"
+            else:
+                full_table_name = table_name
+
+            df = self.spark.table(full_table_name)
+
+            profile_results = {
+                'table_name': full_table_name,
+                'profiling_date': datetime.now().isoformat(),
+                'record_count': df.count(),
+                'column_count': len(df.columns),
+                'columns': {}
+            }
+
+            # Profile each column
+            for column in df.columns:
+                col_profile = self._profile_column(df, column)
+                profile_results['columns'][column] = col_profile
+
+            return profile_results
+
+        except Exception as e:
+            logger.error(f"Error profiling table {table_name}: {str(e)}")
+            return {'error': str(e)}
+
+    def _profile_column(self, df, column_name: str) -> Dict[str, Any]:
+        """Profile individual column"""
+        col_df = df.select(column_name)
+        total_count = col_df.count()
+
+        profile = {
+            'data_type': str(df.schema[column_name].dataType),
+            'total_count': total_count,
+            'null_count': col_df.filter(col(column_name).isNull()).count(),
+            'distinct_count': col_df.distinct().count()
+        }
+
+        profile['null_percentage'] = (profile['null_count'] / total_count * 100) if total_count > 0 else 0
+        profile['completeness'] = 100 - profile['null_percentage']
+
+        # Type-specific profiling
+        data_type = df.schema[column_name].dataType
+
+        if isinstance(data_type, (IntegerType, LongType, DoubleType, FloatType)):
+            # Numeric column profiling
+            numeric_stats = col_df.select(
+                min(column_name).alias('min_val'),
+                max(column_name).alias('max_val'),
+                avg(column_name).alias('avg_val'),
+                stddev(column_name).alias('std_val')
+            ).collect()[0]
+
+            profile.update({
+                'min_value': numeric_stats['min_val'],
+                'max_value': numeric_stats['max_val'],
+                'mean_value': numeric_stats['avg_val'],
+                'std_deviation': numeric_stats['std_val']
+            })
+
+        elif isinstance(data_type, StringType):
+            # String column profiling
+            string_stats = col_df.select(
+                min(length(column_name)).alias('min_length'),
+                max(length(column_name)).alias('max_length'),
+                avg(length(column_name)).alias('avg_length')
+            ).collect()[0]
+
+            profile.update({
+                'min_length': string_stats['min_length'],
+                'max_length': string_stats['max_length'],
+                'avg_length': string_stats['avg_length']
+            })
+
+            # Top values
+            top_values = col_df.groupBy(column_name) \
+                .count() \
+                .orderBy(desc('count')) \
+                .limit(10) \
+                .collect()
+
+            profile['top_values'] = [(row[column_name], row['count']) for row in top_values]
+
+        return profile
+
+    def create_data_catalog(self) -> Dict[str, Any]:
+        """Create comprehensive data catalog"""
+        catalog = {
+            'created_at': datetime.now().isoformat(),
+            'tables': {},
+            'etl_jobs': {},
+            'data_lineage': {},
+            'quality_rules': {}
+        }
+
+        # Catalog tables
+        try:
+            tables = self.spark.sql("SHOW TABLES").collect()
+            for table_row in tables:
+                table_name = table_row['tableName']
+                database = table_row.get('database', 'default')
+
+                # Get table schema
+                schema_info = self.spark.sql(f"DESCRIBE {database}.{table_name}").collect()
+
+                catalog['tables'][f"{database}.{table_name}"] = {
+                    'database': database,
+                    'table_name': table_name,
+                    'columns': [{'name': row['col_name'], 'type': row['data_type']} for row in schema_info],
+                    'record_count': self.spark.table(f"{database}.{table_name}").count()
+                }
+        except Exception as e:
+            logger.warning(f"Error cataloging tables: {str(e)}")
+
+        # Catalog ETL jobs
+        for job_name, job_config in self.etl_jobs.items():
+            catalog['etl_jobs'][job_name] = {
+                'source_type': job_config.source_type,
+                'target_type': job_config.target_type,
+                'incremental': job_config.incremental,
+                'schedule': job_config.schedule,
+                'last_run': self._get_last_job_run(job_name)
+            }
+
+        # Catalog quality rules
+        catalog['quality_rules'] = self.quality_rules
+
+        return catalog
+
+    def optimize_warehouse_performance(self):
+        """Optimize data warehouse performance"""
+        optimizations_applied = []
+
+        try:
+            # Enable adaptive query execution
+            self.spark.conf.set("spark.sql.adaptive.enabled", "true")
+            self.spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", "true")
+            optimizations_applied.append("Enabled adaptive query execution")
+
+            # Optimize join strategies
+            self.spark.conf.set("spark.sql.adaptive.skewJoin.enabled", "true")
+            optimizations_applied.append("Enabled skew join optimization")
+
+            # Cache frequently accessed tables
+            frequently_accessed = ['dim_users', 'fact_tax_calculations']
+            for table in frequently_accessed:
+                try:
+                    self.spark.table(table).cache()
+                    optimizations_applied.append(f"Cached table: {table}")
+                except:
+                    pass
+
+            # Analyze tables for statistics
+            tables = self.spark.sql("SHOW TABLES").collect()
+            for table_row in tables:
+                table_name = table_row['tableName']
+                try:
+                    self.spark.sql(f"ANALYZE TABLE {table_name} COMPUTE STATISTICS")
+                    optimizations_applied.append(f"Updated statistics for: {table_name}")
+                except:
+                    pass
+
+            logger.info(f"Applied {len(optimizations_applied)} performance optimizations")
+            return {
+                'status': 'success',
+                'optimizations_applied': optimizations_applied
+            }
+
+        except Exception as e:
+            logger.error(f"Error optimizing warehouse performance: {str(e)}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'optimizations_applied': optimizations_applied
+            }
+
+    def generate_lineage_report(self) -> Dict[str, Any]:
+        """Generate data lineage report"""
+        lineage_report = {
+            'generated_at': datetime.now().isoformat(),
+            'data_flow': {},
+            'dependencies': {}
+        }
+
+        # Track data flow through ETL jobs
+        for job_name, job_config in self.etl_jobs.items():
+            source_info = f"{job_config.source_type}:{job_config.source_config}"
+            target_info = f"{job_config.target_type}:{job_config.target_config}"
+
+            lineage_report['data_flow'][job_name] = {
+                'source': source_info,
+                'target': target_info,
+                'transformations': len(job_config.transformation_rules)
+            }
+
+        return lineage_report
+
+    def _get_last_successful_run_date(self, job_name: str) -> Optional[str]:
+        """Get last successful run date for incremental loads"""
+        successful_runs = [
+            job for job in self.job_history
+            if job['job_name'] == job_name and job['status'] == 'completed'
+        ]
+
+        if successful_runs:
+            latest_run = max(successful_runs, key=lambda x: x['start_time'])
+            return latest_run['start_time'].isoformat()
+
+        return None
+
+    def _get_last_job_run(self, job_name: str) -> Optional[Dict[str, Any]]:
+        """Get information about last job run"""
+        job_runs = [job for job in self.job_history if job['job_name'] == job_name]
+
+        if job_runs:
+            return max(job_runs, key=lambda x: x['start_time'])
+
+        return None
+
+    def get_warehouse_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive warehouse statistics"""
+        stats = {
+            'generated_at': datetime.now().isoformat(),
+            'etl_jobs': {
+                'total': len(self.etl_jobs),
+                'recent_executions': len([j for j in self.job_history if j['start_time'] > datetime.now() - timedelta(days=7)]),
+                'success_rate': self._calculate_success_rate(),
+                'avg_execution_time': self._calculate_avg_execution_time()
+            },
+            'data_quality': {
+                'rules_defined': sum(len(rules) for rules in self.quality_rules.values()),
+                'recent_violations': self._count_recent_quality_violations()
+            },
+            'storage': {
+                'tables_managed': len(self.data_models)
+            }
+        }
+
+        return stats
+
+    def _calculate_success_rate(self) -> float:
+        """Calculate ETL job success rate"""
+        if not self.job_history:
+            return 0.0
+
+        successful_jobs = len([j for j in self.job_history if j['status'] == 'completed'])
+        return successful_jobs / len(self.job_history) * 100
+
+    def _calculate_avg_execution_time(self) -> float:
+        """Calculate average ETL job execution time"""
+        completed_jobs = [j for j in self.job_history if j['status'] == 'completed' and 'duration_seconds' in j]
+
+        if not completed_jobs:
+            return 0.0
+
+        total_time = sum(job['duration_seconds'] for job in completed_jobs)
+        return total_time / len(completed_jobs)
+
+    def _count_recent_quality_violations(self) -> int:
+        """Count recent data quality violations"""
+        recent_jobs = [j for j in self.job_history if j['start_time'] > datetime.now() - timedelta(days=7)]
+        violations = 0
+
+        for job in recent_jobs:
+            quality_results = job.get('data_quality_results', {})
+            for check in quality_results.get('checks', []):
+                if check['status'] == 'failed':
+                    violations += 1
+
+        return violations
+
+    def cleanup_old_data(self, retention_days: int = 90):
+        """Clean up old data based on retention policy"""
+        cutoff_date = datetime.now() - timedelta(days=retention_days)
+
+        cleanup_results = {
+            'cutoff_date': cutoff_date.isoformat(),
+            'tables_cleaned': [],
+            'records_removed': 0
+        }
+
+        # Clean up job history
+        initial_job_count = len(self.job_history)
+        self.job_history = [job for job in self.job_history if job['start_time'] > cutoff_date]
+        cleanup_results['job_history_cleaned'] = initial_job_count - len(self.job_history)
+
+        return cleanup_results
+
+    def shutdown(self):
+        """Shutdown data warehouse engine"""
+        try:
+            if self.spark:
+                self.spark.stop()
+
+            # Close database connections
+            for engine in self.engines.values():
+                engine.dispose()
+
+            logger.info("Data warehouse engine shutdown completed")
+
+        except Exception as e:
+            logger.error(f"Error during shutdown: {str(e)}")
+
+# Example usage and testing
+if __name__ == "__main__":
+    # Initialize data warehouse engine
+    dw_engine = DataWarehouseEngine()
+
+    try:
+        # Generate sample data
+        sample_users = [
+            (1, "user1@example.com", "2023-01-15", True, "premium"),
+            (2, "user2@example.com", "2023-02-20", False, "free"),
+            (3, "user3@example.com", "2023-03-10", True, "premium")
+        ]
+
+        sample_calculations = [
+            (101, 1, 75000, 12000, 3000, "2023-04-01"),
+            (102, 2, 45000, 6000, 2000, "2023-04-02"),
+            (103, 3, 95000, 18000, 4000, "2023-04-03")
+        ]
+
+        # Create sample DataFrames
+        user_schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("email", StringType(), True),
+            StructField("created_at", StringType(), True),
+            StructField("is_premium", BooleanType(), True),
+            StructField("user_type", StringType(), True)
+        ])
+
+        calc_schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("user_id", IntegerType(), True),
+            StructField("income", DoubleType(), True),
+            StructField("federal_tax", DoubleType(), True),
+            StructField("state_tax", DoubleType(), True),
+            StructField("created_at", StringType(), True)
+        ])
+
+        users_df = dw_engine.spark.createDataFrame(sample_users, user_schema)
+        calc_df = dw_engine.spark.createDataFrame(sample_calculations, calc_schema)
+
+        # Create temporary views for testing
+        users_df.createOrReplaceTempView("users")
+        calc_df.createOrReplaceTempView("tax_calculations")
+
+        # Run ETL job
+        print("Running user data ETL job...")
+        user_etl_result = dw_engine.run_etl_job('user_data_etl')
+        print(f"User ETL Result: {user_etl_result}")
+
+        # Run data profiling
+        print("\nRunning data profiling...")
+        profile_result = dw_engine.run_data_profiling('users')
+        print(f"Profiling completed. Found {profile_result['record_count']} records with {profile_result['column_count']} columns")
+
+        # Generate warehouse statistics
+        print("\nGenerating warehouse statistics...")
+        stats = dw_engine.get_warehouse_statistics()
+        print(f"Warehouse Statistics: {stats}")
+
+        # Create data catalog
+        print("\nCreating data catalog...")
+        catalog = dw_engine.create_data_catalog()
+        print(f"Data catalog created with {len(catalog['tables'])} tables and {len(catalog['etl_jobs'])} ETL jobs")
+
+        # Optimize performance
+        print("\nOptimizing warehouse performance...")
+        optimization_result = dw_engine.optimize_warehouse_performance()
+        print(f"Applied {len(optimization_result.get('optimizations_applied', []))} optimizations")
+
+    except Exception as e:
+        print(f"Error during testing: {str(e)}")
+
+    finally:
+        # Shutdown
+        dw_engine.shutdown()

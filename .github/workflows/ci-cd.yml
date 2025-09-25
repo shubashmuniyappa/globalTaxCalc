@@ -1,0 +1,496 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'hotfix/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  NODE_VERSION: '18.x'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # === CODE QUALITY & SECURITY ===
+  code-quality:
+    name: Code Quality & Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier check
+        run: npm run format:check
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Run dependency check
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+  # === UNIT TESTS ===
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, tax-engine, report-export-service, file-processing-service, monitoring-health-service]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies for ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: npm ci
+
+      - name: Run unit tests for ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./${{ matrix.service }}/coverage
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+
+  # === INTEGRATION TESTS ===
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: globaltaxcalc_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start services
+        run: |
+          # Start all microservices in background
+          cd api-gateway && npm install && npm start &
+          cd auth-service && npm install && npm start &
+          cd tax-engine && npm install && npm start &
+          cd report-export-service && npm install && npm start &
+          cd file-processing-service && npm install && npm start &
+          cd monitoring-health-service && npm install && npm start &
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/globaltaxcalc_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Wait for services to start
+        run: |
+          sleep 30
+          # Health check all services
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3001/health || exit 1
+          curl -f http://localhost:3002/health || exit 1
+          curl -f http://localhost:3003/health || exit 1
+          curl -f http://localhost:3004/health || exit 1
+          curl -f http://localhost:3005/health || exit 1
+
+      - name: Run integration tests
+        working-directory: ./tests
+        run: |
+          npm install
+          npm run test:integration
+        env:
+          API_GATEWAY_URL: http://localhost:3000
+          AUTH_SERVICE_URL: http://localhost:3001
+          TAX_ENGINE_URL: http://localhost:3002
+          REPORT_SERVICE_URL: http://localhost:3003
+          FILE_SERVICE_URL: http://localhost:3004
+          MONITORING_URL: http://localhost:3005
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-results
+          path: tests/reports/
+
+  # === SECURITY TESTS ===
+  security-tests:
+    name: Security Testing
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install security testing tools
+        run: |
+          npm install -g @zap/cli-linux
+          npm install
+
+      - name: Start application for security testing
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 60
+
+      - name: Run OWASP ZAP baseline scan
+        run: |
+          zap-baseline.py -t http://localhost:3000 -J zap-report.json || true
+
+      - name: Run custom security tests
+        working-directory: ./tests
+        run: |
+          npm install
+          npm run test:security
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-test-results
+          path: |
+            zap-report.json
+            tests/reports/security-*.json
+
+  # === BUILD DOCKER IMAGES ===
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, tax-engine, report-export-service, file-processing-service, monitoring-health-service, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # === LOAD TESTING ===
+  load-tests:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Start application for load testing
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 60
+
+      - name: Run load tests
+        working-directory: ./tests
+        run: |
+          npm install
+          BASE_URL=http://localhost:3000 k6 run load-tests/k6-script.js
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: load-test-results
+          path: tests/reports/load-test-*.json
+
+  # === DEPLOY TO STAGING ===
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [integration-tests, security-tests, build-images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Staging
+        run: |
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway environment staging
+          railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Run smoke tests on staging
+        run: |
+          sleep 60
+          curl -f ${{ secrets.STAGING_URL }}/health
+          curl -f ${{ secrets.STAGING_URL }}/api/health
+
+      - name: Notify deployment status
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # === DEPLOY TO PRODUCTION ===
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [load-tests, deploy-staging]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Production
+        run: |
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway environment production
+          railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Wait for deployment
+        run: sleep 120
+
+      - name: Run production health checks
+        run: |
+          curl -f https://globaltaxcalc.com/health
+          curl -f https://api.globaltaxcalc.com/health
+
+      - name: Run production smoke tests
+        working-directory: ./tests
+        run: |
+          npm install
+          BASE_URL=https://api.globaltaxcalc.com npm run test:smoke
+        env:
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+      - name: Update monitoring dashboards
+        run: |
+          curl -X POST ${{ secrets.GRAFANA_WEBHOOK }} \
+            -H "Content-Type: application/json" \
+            -d '{"deployment": "production", "version": "${{ github.event.release.tag_name }}", "status": "deployed"}'
+
+      - name: Notify successful deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              channel: '#deployments',
+              username: 'GitHub Actions',
+              icon_emoji: ':rocket:',
+              text: '🚀 GlobalTaxCalc.com v${{ github.event.release.tag_name }} deployed to production!',
+              attachments: [{
+                color: 'good',
+                fields: [{
+                  title: 'Version',
+                  value: '${{ github.event.release.tag_name }}',
+                  short: true
+                }, {
+                  title: 'Environment',
+                  value: 'Production',
+                  short: true
+                }, {
+                  title: 'URL',
+                  value: 'https://globaltaxcalc.com',
+                  short: false
+                }]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # === POST-DEPLOYMENT MONITORING ===
+  post-deployment-monitoring:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup monitoring
+        run: |
+          # Set up synthetic monitoring
+          curl -X POST ${{ secrets.DATADOG_API_URL }}/api/v1/synthetics/tests \
+            -H "Content-Type: application/json" \
+            -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
+            -H "DD-APPLICATION-KEY: ${{ secrets.DATADOG_APP_KEY }}" \
+            -d @monitoring/synthetic-tests.json
+
+      - name: Enable production alerts
+        run: |
+          # Enable production alerting rules
+          curl -X POST ${{ secrets.ALERTMANAGER_URL }}/api/v1/alerts \
+            -H "Content-Type: application/json" \
+            -d @monitoring/production-alerts.json
+
+      - name: Schedule performance testing
+        run: |
+          # Schedule regular performance tests
+          echo "*/30 * * * * cd /app && npm run test:load" | crontab -
+
+  # === ROLLBACK CAPABILITY ===
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Rollback deployment
+        run: |
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+          railway environment production
+          railway rollback
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Verify rollback
+        run: |
+          sleep 60
+          curl -f https://globaltaxcalc.com/health
+
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              channel: '#deployments',
+              username: 'GitHub Actions',
+              icon_emoji: ':warning:',
+              text: '⚠️ GlobalTaxCalc.com production rollback completed',
+              attachments: [{
+                color: 'warning',
+                fields: [{
+                  title: 'Action',
+                  value: 'Rollback',
+                  short: true
+                }, {
+                  title: 'Environment',
+                  value: 'Production',
+                  short: true
+                }, {
+                  title: 'Triggered by',
+                  value: '${{ github.actor }}',
+                  short: true
+                }]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

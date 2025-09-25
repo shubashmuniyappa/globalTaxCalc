@@ -1,0 +1,367 @@
+/**
+ * Cultural Adaptations CSS
+ * Global styles for cultural and RTL support
+ */
+
+/* Base RTL Support */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+/* Cultural Layout Densities */
+.layout-compact {
+  --spacing-base: 0.75rem;
+  --font-size-scale: 0.9;
+}
+
+.layout-balanced {
+  --spacing-base: 1rem;
+  --font-size-scale: 1;
+}
+
+.layout-spacious {
+  --spacing-base: 1.25rem;
+  --font-size-scale: 1.1;
+}
+
+/* Direction-aware utilities */
+.direction-ltr {
+  direction: ltr;
+}
+
+.direction-rtl {
+  direction: rtl;
+}
+
+/* RTL-aware margin and padding utilities */
+[dir="rtl"] .ml-1 { margin-right: 0.25rem; margin-left: 0; }
+[dir="rtl"] .ml-2 { margin-right: 0.5rem; margin-left: 0; }
+[dir="rtl"] .ml-3 { margin-right: 0.75rem; margin-left: 0; }
+[dir="rtl"] .ml-4 { margin-right: 1rem; margin-left: 0; }
+[dir="rtl"] .ml-5 { margin-right: 1.25rem; margin-left: 0; }
+[dir="rtl"] .ml-6 { margin-right: 1.5rem; margin-left: 0; }
+[dir="rtl"] .ml-8 { margin-right: 2rem; margin-left: 0; }
+
+[dir="rtl"] .mr-1 { margin-left: 0.25rem; margin-right: 0; }
+[dir="rtl"] .mr-2 { margin-left: 0.5rem; margin-right: 0; }
+[dir="rtl"] .mr-3 { margin-left: 0.75rem; margin-right: 0; }
+[dir="rtl"] .mr-4 { margin-left: 1rem; margin-right: 0; }
+[dir="rtl"] .mr-5 { margin-left: 1.25rem; margin-right: 0; }
+[dir="rtl"] .mr-6 { margin-left: 1.5rem; margin-right: 0; }
+[dir="rtl"] .mr-8 { margin-left: 2rem; margin-right: 0; }
+
+[dir="rtl"] .pl-1 { padding-right: 0.25rem; padding-left: 0; }
+[dir="rtl"] .pl-2 { padding-right: 0.5rem; padding-left: 0; }
+[dir="rtl"] .pl-3 { padding-right: 0.75rem; padding-left: 0; }
+[dir="rtl"] .pl-4 { padding-right: 1rem; padding-left: 0; }
+[dir="rtl"] .pl-5 { padding-right: 1.25rem; padding-left: 0; }
+[dir="rtl"] .pl-6 { padding-right: 1.5rem; padding-left: 0; }
+[dir="rtl"] .pl-8 { padding-right: 2rem; padding-left: 0; }
+
+[dir="rtl"] .pr-1 { padding-left: 0.25rem; padding-right: 0; }
+[dir="rtl"] .pr-2 { padding-left: 0.5rem; padding-right: 0; }
+[dir="rtl"] .pr-3 { padding-left: 0.75rem; padding-right: 0; }
+[dir="rtl"] .pr-4 { padding-left: 1rem; padding-right: 0; }
+[dir="rtl"] .pr-5 { padding-left: 1.25rem; padding-right: 0; }
+[dir="rtl"] .pr-6 { padding-left: 1.5rem; padding-right: 0; }
+[dir="rtl"] .pr-8 { padding-left: 2rem; padding-right: 0; }
+
+/* RTL-aware positioning */
+[dir="rtl"] .left-0 { right: 0; left: auto; }
+[dir="rtl"] .left-1 { right: 0.25rem; left: auto; }
+[dir="rtl"] .left-2 { right: 0.5rem; left: auto; }
+[dir="rtl"] .left-3 { right: 0.75rem; left: auto; }
+[dir="rtl"] .left-4 { right: 1rem; left: auto; }
+
+[dir="rtl"] .right-0 { left: 0; right: auto; }
+[dir="rtl"] .right-1 { left: 0.25rem; right: auto; }
+[dir="rtl"] .right-2 { left: 0.5rem; right: auto; }
+[dir="rtl"] .right-3 { left: 0.75rem; right: auto; }
+[dir="rtl"] .right-4 { left: 1rem; right: auto; }
+
+/* RTL-aware borders */
+[dir="rtl"] .border-l { border-right-width: 1px; border-left-width: 0; }
+[dir="rtl"] .border-l-2 { border-right-width: 2px; border-left-width: 0; }
+[dir="rtl"] .border-l-4 { border-right-width: 4px; border-left-width: 0; }
+[dir="rtl"] .border-l-8 { border-right-width: 8px; border-left-width: 0; }
+
+[dir="rtl"] .border-r { border-left-width: 1px; border-right-width: 0; }
+[dir="rtl"] .border-r-2 { border-left-width: 2px; border-right-width: 0; }
+[dir="rtl"] .border-r-4 { border-left-width: 4px; border-right-width: 0; }
+[dir="rtl"] .border-r-8 { border-left-width: 8px; border-right-width: 0; }
+
+/* RTL-aware flexbox */
+[dir="rtl"] .flex-row { flex-direction: row-reverse; }
+[dir="rtl"] .flex-row-reverse { flex-direction: row; }
+
+/* RTL-aware text alignment */
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+
+/* Cultural font adjustments */
+.culture-ar {
+  font-family: 'Noto Sans Arabic', 'Tahoma', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+.culture-he {
+  font-family: 'Noto Sans Hebrew', 'David', 'Times New Roman', serif;
+  line-height: 1.6;
+}
+
+.culture-ja {
+  font-family: 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', sans-serif;
+  line-height: 1.7;
+  letter-spacing: 0.05em;
+}
+
+.culture-zh {
+  font-family: 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.7;
+  letter-spacing: 0.05em;
+}
+
+.culture-ko {
+  font-family: 'Noto Sans CJK KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  line-height: 1.6;
+}
+
+.culture-th {
+  font-family: 'Noto Sans Thai', 'Leelawadee UI', 'Tahoma', sans-serif;
+  line-height: 1.7;
+}
+
+.culture-hi {
+  font-family: 'Noto Sans Devanagari', 'Mangal', 'Arial Unicode MS', sans-serif;
+  line-height: 1.7;
+}
+
+/* Vertical text support for specific cultures */
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.vertical-text.culture-ja {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+.vertical-text.culture-zh {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Cultural color adaptations */
+.culture-zh .text-primary { color: #dc2626; } /* Red for Chinese */
+.culture-ar .text-primary { color: #16a34a; } /* Green for Arabic */
+.culture-in .text-primary { color: #f97316; } /* Saffron for Indian */
+
+/* Cultural spacing adjustments */
+.culture-ja.layout-compact {
+  --spacing-base: 0.5rem;
+}
+
+.culture-ar.layout-spacious {
+  --spacing-base: 1.5rem;
+}
+
+/* Form input cultural adaptations */
+.cultural-input {
+  transition: all 0.2s ease;
+}
+
+.cultural-input:focus {
+  outline: 2px solid var(--cultural-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* RTL-aware form layouts */
+[dir="rtl"] .form-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .form-label {
+  text-align: right;
+}
+
+[dir="rtl"] .form-help-text {
+  text-align: right;
+}
+
+/* Cultural number input styles */
+.culture-ar input[type="number"],
+.culture-fa input[type="number"] {
+  font-feature-settings: "kern", "liga", "clig", "calt";
+}
+
+/* Arabic and Hebrew specific styles */
+.culture-ar,
+.culture-he {
+  font-feature-settings: "kern", "liga", "clig", "calt", "locl";
+}
+
+/* High-contrast mode for accessibility */
+@media (prefers-contrast: high) {
+  .cultural-input {
+    border-width: 2px;
+  }
+
+  .cultural-input:focus {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .cultural-input {
+    transition: none;
+  }
+}
+
+/* Cultural loading indicators */
+.cultural-loading {
+  display: inline-block;
+}
+
+.culture-ar .cultural-loading {
+  animation: spin-rtl 1s linear infinite;
+}
+
+@keyframes spin-rtl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+/* Cultural modal and dialog styles */
+[dir="rtl"] .modal {
+  text-align: right;
+}
+
+[dir="rtl"] .modal-close {
+  left: 1rem;
+  right: auto;
+}
+
+/* Cultural table styles */
+[dir="rtl"] table {
+  direction: rtl;
+}
+
+[dir="rtl"] th:first-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+[dir="rtl"] th:last-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+/* Cultural navigation styles */
+[dir="rtl"] .nav-item {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+[dir="rtl"] .nav-item:first-child {
+  margin-left: 0;
+}
+
+[dir="rtl"] .breadcrumb {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb-separator::before {
+  content: "\\";
+  transform: scaleX(-1);
+}
+
+/* Cultural dropdown and menu styles */
+[dir="rtl"] .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .dropdown-item {
+  text-align: right;
+}
+
+/* Cultural tooltip styles */
+[dir="rtl"] .tooltip {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Cultural card and panel styles */
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+[dir="rtl"] .panel-title {
+  text-align: right;
+}
+
+/* Cultural image and media styles */
+[dir="rtl"] .media {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .media-object {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+/* Cultural animation adjustments */
+[dir="rtl"] .slide-in-left {
+  transform: translateX(100%);
+}
+
+[dir="rtl"] .slide-in-right {
+  transform: translateX(-100%);
+}
+
+/* Print styles for different cultures */
+@media print {
+  .culture-ar,
+  .culture-he {
+    font-family: Arial, sans-serif !important;
+  }
+
+  .culture-ja,
+  .culture-zh {
+    font-family: 'Times New Roman', serif !important;
+  }
+
+  [dir="rtl"] {
+    direction: rtl !important;
+  }
+}
+
+/* Mobile-specific cultural adaptations */
+@media (max-width: 768px) {
+  .culture-ar,
+  .culture-he {
+    font-size: 1.1em;
+    line-height: 1.8;
+  }
+
+  .culture-ja,
+  .culture-zh {
+    font-size: 1.05em;
+    line-height: 1.8;
+  }
+
+  [dir="rtl"] .mobile-nav {
+    text-align: right;
+  }
+}
+
+/* Dark mode cultural adaptations */
+@media (prefers-color-scheme: dark) {
+  .culture-zh .text-primary { color: #fca5a5; } /* Lighter red for Chinese in dark mode */
+  .culture-ar .text-primary { color: #86efac; } /* Lighter green for Arabic in dark mode */
+  .culture-in .text-primary { color: #fdba74; } /* Lighter saffron for Indian in dark mode */
+}

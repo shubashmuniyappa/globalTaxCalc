@@ -1,0 +1,356 @@
+{
+  "country": {
+    "code": "SG",
+    "name": "Singapore",
+    "currency": "SGD",
+    "currency_symbol": "S$",
+    "tax_authority": "Inland Revenue Authority of Singapore (IRAS)",
+    "assessment_year": "2024",
+    "income_year": "2023",
+    "language": "English"
+  },
+  "resident_tax": {
+    "tax_brackets": [
+      {
+        "min_income": 0,
+        "max_income": 20000,
+        "rate": 0,
+        "description": "No tax on first S$20,000"
+      },
+      {
+        "min_income": 20000,
+        "max_income": 30000,
+        "rate": 2,
+        "description": "2% on next S$10,000"
+      },
+      {
+        "min_income": 30000,
+        "max_income": 40000,
+        "rate": 3.5,
+        "description": "3.5% on next S$10,000"
+      },
+      {
+        "min_income": 40000,
+        "max_income": 80000,
+        "rate": 7,
+        "description": "7% on next S$40,000"
+      },
+      {
+        "min_income": 80000,
+        "max_income": 120000,
+        "rate": 11.5,
+        "description": "11.5% on next S$40,000"
+      },
+      {
+        "min_income": 120000,
+        "max_income": 160000,
+        "rate": 15,
+        "description": "15% on next S$40,000"
+      },
+      {
+        "min_income": 160000,
+        "max_income": 200000,
+        "rate": 18,
+        "description": "18% on next S$40,000"
+      },
+      {
+        "min_income": 200000,
+        "max_income": 240000,
+        "rate": 19,
+        "description": "19% on next S$40,000"
+      },
+      {
+        "min_income": 240000,
+        "max_income": 280000,
+        "rate": 19.5,
+        "description": "19.5% on next S$40,000"
+      },
+      {
+        "min_income": 280000,
+        "max_income": 320000,
+        "rate": 20,
+        "description": "20% on next S$40,000"
+      },
+      {
+        "min_income": 320000,
+        "max_income": null,
+        "rate": 22,
+        "description": "22% on income above S$320,000"
+      }
+    ]
+  },
+  "non_resident_tax": {
+    "threshold": 22000,
+    "rate": 22,
+    "description": "Flat 22% rate on income above S$22,000 for non-residents"
+  },
+  "reliefs": {
+    "personal_relief": {
+      "amount": 1000,
+      "description": "Personal relief for tax residents",
+      "category": "personal"
+    },
+    "earned_income_relief": {
+      "amount": 1000,
+      "description": "Relief for earned income",
+      "category": "employment"
+    },
+    "spouse_relief": {
+      "amount": 2000,
+      "conditions": ["Spouse not working", "Spouse annual income ≤ S$4,000"],
+      "description": "Relief for non-working spouse",
+      "category": "family"
+    },
+    "handicapped_spouse_relief": {
+      "amount": 5500,
+      "conditions": ["Spouse is handicapped"],
+      "description": "Relief for handicapped spouse",
+      "category": "family"
+    },
+    "child_relief": {
+      "amount": 4000,
+      "max_children": 7,
+      "additional_relief": {
+        "5th_child": 25000,
+        "6th_child": 25000,
+        "7th_child": 25000
+      },
+      "description": "Relief for each child",
+      "category": "family"
+    },
+    "handicapped_child_relief": {
+      "amount": 7500,
+      "description": "Additional relief for handicapped child",
+      "category": "family"
+    },
+    "parent_relief": {
+      "amount": 9000,
+      "conditions": ["Parent aged 55 and above", "Parent annual income ≤ S$4,000"],
+      "description": "Relief for supporting aged parents",
+      "category": "family"
+    },
+    "handicapped_parent_relief": {
+      "amount": 14000,
+      "description": "Relief for supporting handicapped parents",
+      "category": "family"
+    },
+    "grandparent_relief": {
+      "amount": 3000,
+      "conditions": ["Grandparent aged 55 and above", "Grandparent annual income ≤ S$4,000"],
+      "description": "Relief for supporting aged grandparents",
+      "category": "family"
+    },
+    "handicapped_grandparent_relief": {
+      "amount": 6000,
+      "description": "Relief for supporting handicapped grandparents",
+      "category": "family"
+    },
+    "brother_sister_relief": {
+      "amount": 5500,
+      "conditions": ["Brother/sister aged under 25", "Brother/sister annual income ≤ S$4,000"],
+      "description": "Relief for supporting young siblings",
+      "category": "family"
+    },
+    "handicapped_brother_sister_relief": {
+      "amount": 10000,
+      "description": "Relief for supporting handicapped siblings",
+      "category": "family"
+    },
+    "disabled_relief": {
+      "amount": 3500,
+      "description": "Relief for disabled individuals",
+      "category": "personal"
+    }
+  },
+  "cpf_contributions": {
+    "age_bands": {
+      "35_and_below": {
+        "employee_rate": 20,
+        "employer_rate": 17,
+        "total_rate": 37
+      },
+      "35_to_45": {
+        "employee_rate": 20,
+        "employer_rate": 17,
+        "total_rate": 37
+      },
+      "45_to_50": {
+        "employee_rate": 20,
+        "employer_rate": 17,
+        "total_rate": 37
+      },
+      "50_to_55": {
+        "employee_rate": 20,
+        "employer_rate": 17,
+        "total_rate": 37
+      },
+      "55_to_60": {
+        "employee_rate": 13,
+        "employer_rate": 13,
+        "total_rate": 26
+      },
+      "60_to_65": {
+        "employee_rate": 7.5,
+        "employer_rate": 9,
+        "total_rate": 16.5
+      },
+      "65_to_70": {
+        "employee_rate": 5,
+        "employer_rate": 7.5,
+        "total_rate": 12.5
+      },
+      "70_and_above": {
+        "employee_rate": 5,
+        "employer_rate": 5,
+        "total_rate": 10
+      }
+    },
+    "salary_ceiling": {
+      "ordinary_wage": 72000,
+      "additional_wage": 102000
+    },
+    "account_allocation": {
+      "ordinary_account": "Split among OA, SA, MA",
+      "special_account": "For retirement and investment",
+      "medisave_account": "For healthcare expenses"
+    }
+  },
+  "supplementary_retirement_scheme": {
+    "contribution_limits": {
+      "singaporeans_prs": 15300,
+      "foreigners": 35700
+    },
+    "tax_treatment": "Contributions are tax-deductible",
+    "withdrawal_rules": "10 years minimum before withdrawal"
+  },
+  "additional_reliefs": {
+    "life_insurance_relief": {
+      "max_amount": 5000,
+      "description": "Relief for life insurance premiums",
+      "category": "insurance"
+    },
+    "course_fee_relief": {
+      "max_amount": 5500,
+      "description": "Relief for approved course fees",
+      "category": "education"
+    },
+    "foreign_maid_levy_relief": {
+      "amount": 2400,
+      "description": "Relief for foreign domestic worker levy",
+      "category": "domestic"
+    },
+    "cpf_cash_top_up_relief": {
+      "max_amount": 14000,
+      "description": "Relief for voluntary CPF contributions",
+      "category": "retirement"
+    },
+    "cpf_medisave_top_up_relief": {
+      "max_amount": 8000,
+      "description": "Relief for Medisave top-ups for family",
+      "category": "healthcare"
+    }
+  },
+  "rebates": {
+    "parenthood_tax_rebate": {
+      "1st_child": 5000,
+      "2nd_child": 10000,
+      "3rd_child": 20000,
+      "4th_child": 20000,
+      "5th_plus_child": 20000,
+      "conditions": ["Child born/adopted in year of assessment"],
+      "description": "One-time rebate for each child"
+    },
+    "working_mother_child_relief": {
+      "percentage": 15,
+      "max_amount": 25000,
+      "conditions": ["Working mother", "Child aged 12 and below"],
+      "description": "15% of mother's earned income, capped at S$25,000"
+    }
+  },
+  "employment_benefits": {
+    "transport_allowance": {
+      "max_exemption": 7200,
+      "description": "Annual transport allowance exemption"
+    },
+    "meal_allowance": {
+      "max_exemption": 1800,
+      "description": "Annual meal allowance exemption"
+    },
+    "mobile_phone_benefit": {
+      "max_exemption": 480,
+      "description": "Annual mobile phone benefit exemption"
+    },
+    "car_benefit": {
+      "calculation": "Annual value method or cost method",
+      "description": "Taxable value of company car"
+    }
+  },
+  "withholding_tax": {
+    "employment_income": {
+      "rates": "Progressive rates based on estimated annual income",
+      "filing_requirement": "Annual income tax return"
+    },
+    "director_fees": {
+      "rate": 22,
+      "description": "Flat rate withholding on director fees"
+    },
+    "consultant_fees": {
+      "rate": 22,
+      "description": "Flat rate withholding on consultant fees for non-residents"
+    }
+  },
+  "gst": {
+    "standard_rate": 9,
+    "zero_rated": ["Exports", "International services"],
+    "exempt": ["Financial services", "Residential property sales"],
+    "registration_threshold": 1000000
+  },
+  "property_tax": {
+    "owner_occupied": {
+      "annual_value_up_to_8000": 0,
+      "annual_value_8001_to_55000": 4,
+      "annual_value_above_55000": 6
+    },
+    "non_owner_occupied": {
+      "rate": 12,
+      "description": "Flat rate for non-owner occupied properties"
+    }
+  },
+  "international_provisions": {
+    "tax_treaties": {
+      "description": "Singapore has extensive tax treaty network",
+      "benefits": ["Reduced withholding rates", "Elimination of double taxation"]
+    },
+    "foreign_income": {
+      "territorial_system": "Foreign-sourced income generally not taxable if not remitted",
+      "exceptions": ["Income from trade or business"]
+    }
+  },
+  "filing_requirements": {
+    "filing_deadline": "April 15",
+    "extension_deadline": "December 15 (with tax agent)",
+    "income_threshold": 22000,
+    "e_filing_mandatory": "For most taxpayers"
+  },
+  "penalties": {
+    "late_filing": {
+      "penalty": "S$200 plus 5% of tax due per month",
+      "description": "Penalty for late filing of tax return"
+    },
+    "late_payment": {
+      "penalty": "5% of outstanding tax per month",
+      "description": "Penalty for late payment of tax"
+    }
+  },
+  "last_updated": "2024-09-18",
+  "source": "Inland Revenue Authority of Singapore (IRAS)",
+  "notes": [
+    "Tax rates are for Year of Assessment 2024 (income earned in 2023)",
+    "Singapore operates a territorial tax system",
+    "CPF contributions are mandatory for citizens and PRs",
+    "SRS provides additional retirement savings with tax benefits",
+    "Non-residents are taxed at flat rates on Singapore income",
+    "Various reliefs available for family support and personal expenses",
+    "Electronic filing is encouraged and often mandatory"
+  ]
+}

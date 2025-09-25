@@ -1,0 +1,65 @@
+{
+  "data_generation": {
+    "status": "success",
+    "records": 1000,
+    "features": 13
+  },
+  "analytics": {
+    "status": "success",
+    "results": {
+      "total_users": 1000,
+      "avg_income": 50650.78150417845,
+      "median_income": 37058.042908706295,
+      "high_income_users": "106",
+      "upgrade_candidates": "102",
+      "top_states": {
+        "NY": 175,
+        "PA": 150,
+        "OH": 145
+      },
+      "filing_status_dist": {
+        "head_of_household": 263,
+        "single": 253,
+        "married_jointly": 243,
+        "married_separately": 241
+      },
+      "daily_avg_signups": 23.80952380952381,
+      "growth_rate_pct": -4.761904761904756
+    }
+  },
+  "machine_learning": {
+    "status": "success",
+    "results": {
+      "train_accuracy": 0.7325,
+      "test_accuracy": 0.715,
+      "train_samples": 800,
+      "test_samples": 200,
+      "feature_importance": {
+        "income": 0.5057755484046166,
+        "age": 0.07846396228076721,
+        "dependents": 0.16618661722892503,
+        "deductions": 0.2239302949435956,
+        "session_count": 0.09905971385357518,
+        "calculations_performed": 0.014138424626823494
+      },
+      "top_feature": "income"
+    }
+  },
+  "insights": {
+    "status": "success",
+    "insights": [
+      "Geographic concentration: NY is the top market with 175 users",
+      "Predictive model shows good performance for identifying upgrade candidates",
+      "Key predictor: income is most correlated with upgrade likelihood"
+    ],
+    "count": 3
+  },
+  "summary": {
+    "total_duration_seconds": 0.031568,
+    "successful_steps": 4,
+    "total_steps": 4,
+    "success_rate": 100.0,
+    "records_processed": 1000,
+    "processing_rate": 31677.648251393817
+  }
+}

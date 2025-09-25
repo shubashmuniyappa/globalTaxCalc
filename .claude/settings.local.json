@@ -8,7 +8,15 @@
       "Bash(done)",
       "Bash(cat:*)",
       "Bash(chmod:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm init:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(npm install)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

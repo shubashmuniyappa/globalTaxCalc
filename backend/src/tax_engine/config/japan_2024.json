@@ -1,0 +1,289 @@
+{
+  "country": {
+    "code": "JP",
+    "name": "Japan",
+    "currency": "JPY",
+    "currency_symbol": "¥",
+    "tax_authority": "National Tax Agency (国税庁)",
+    "tax_year": "Calendar year 2024",
+    "language": "Japanese"
+  },
+  "national_income_tax": {
+    "tax_brackets": [
+      {
+        "min_income": 0,
+        "max_income": 1950000,
+        "rate": 5,
+        "description": "5% on income up to ¥1,950,000"
+      },
+      {
+        "min_income": 1950000,
+        "max_income": 3300000,
+        "rate": 10,
+        "description": "10% on income ¥1,950,001-¥3,300,000"
+      },
+      {
+        "min_income": 3300000,
+        "max_income": 6950000,
+        "rate": 20,
+        "description": "20% on income ¥3,300,001-¥6,950,000"
+      },
+      {
+        "min_income": 6950000,
+        "max_income": 9000000,
+        "rate": 23,
+        "description": "23% on income ¥6,950,001-¥9,000,000"
+      },
+      {
+        "min_income": 9000000,
+        "max_income": 18000000,
+        "rate": 33,
+        "description": "33% on income ¥9,000,001-¥18,000,000"
+      },
+      {
+        "min_income": 18000000,
+        "max_income": 40000000,
+        "rate": 40,
+        "description": "40% on income ¥18,000,001-¥40,000,000"
+      },
+      {
+        "min_income": 40000000,
+        "max_income": null,
+        "rate": 45,
+        "description": "45% on income above ¥40,000,000"
+      }
+    ],
+    "basic_exemption": 480000,
+    "spouse_exemption": 380000,
+    "dependent_exemption": 380000,
+    "reconstruction_tax_rate": 2.1
+  },
+  "employment_income_deduction": {
+    "brackets": [
+      {
+        "income_range": "up to 1,625,000",
+        "deduction": 550000,
+        "formula": "Fixed amount"
+      },
+      {
+        "income_range": "1,625,001 to 1,800,000",
+        "deduction": "income × 40% - 100,000",
+        "formula": "Percentage based"
+      },
+      {
+        "income_range": "1,800,001 to 3,600,000",
+        "deduction": "income × 30% + 80,000",
+        "formula": "Percentage based"
+      },
+      {
+        "income_range": "3,600,001 to 6,600,000",
+        "deduction": "income × 20% + 440,000",
+        "formula": "Percentage based"
+      },
+      {
+        "income_range": "6,600,001 to 8,500,000",
+        "deduction": "income × 10% + 1,100,000",
+        "formula": "Percentage based"
+      },
+      {
+        "income_range": "8,500,001 and above",
+        "deduction": 1950000,
+        "formula": "Maximum amount"
+      }
+    ]
+  },
+  "inhabitant_tax": {
+    "uniform_portion": 5000,
+    "income_portion_rate": 10,
+    "basic_exemption": 350000,
+    "spouse_exemption": 330000,
+    "dependent_exemption": 330000,
+    "description": "Local tax consisting of prefecture tax (6%) and municipal tax (4%)"
+  },
+  "social_insurance": {
+    "employee_contributions": {
+      "employment_insurance": {
+        "rate": 0.6,
+        "ceiling": 22900000,
+        "description": "Unemployment insurance (雇用保険)"
+      },
+      "pension_insurance": {
+        "rate": 9.15,
+        "ceiling": 7500000,
+        "description": "Employee pension insurance (厚生年金保険)"
+      },
+      "health_insurance": {
+        "rate": 5.0,
+        "ceiling": 12000000,
+        "description": "Health insurance (健康保険) - average rate"
+      },
+      "care_insurance": {
+        "rate": 0.6,
+        "age_requirement": 40,
+        "ceiling": 12000000,
+        "description": "Long-term care insurance (介護保険)"
+      }
+    },
+    "age_based_rates": {
+      "under_35": {
+        "employee_pension_rate": 20,
+        "employer_pension_rate": 17
+      },
+      "35_to_45": {
+        "employee_pension_rate": 20,
+        "employer_pension_rate": 17
+      },
+      "45_to_50": {
+        "employee_pension_rate": 20,
+        "employer_pension_rate": 17
+      },
+      "50_to_55": {
+        "employee_pension_rate": 20,
+        "employer_pension_rate": 17
+      },
+      "55_to_60": {
+        "employee_pension_rate": 13,
+        "employer_pension_rate": 13
+      },
+      "60_to_65": {
+        "employee_pension_rate": 7.5,
+        "employer_pension_rate": 9
+      },
+      "65_to_70": {
+        "employee_pension_rate": 5,
+        "employer_pension_rate": 7.5
+      },
+      "over_70": {
+        "employee_pension_rate": 5,
+        "employer_pension_rate": 5
+      }
+    }
+  },
+  "self_employed_insurance": {
+    "national_pension": {
+      "monthly_premium": 16520,
+      "annual_premium": 198240,
+      "description": "Fixed premium for National Pension (国民年金)"
+    },
+    "national_health_insurance": {
+      "rate": 10,
+      "ceiling": 890000,
+      "description": "Approximate rate for National Health Insurance (国民健康保険)"
+    }
+  },
+  "deductions": {
+    "social_insurance_premiums": {
+      "deduction": "100% of premiums paid",
+      "description": "Full deduction for social insurance premiums (社会保険料控除)"
+    },
+    "life_insurance_premiums": {
+      "max_deduction": 120000,
+      "description": "Life insurance premium deduction (生命保険料控除)"
+    },
+    "earthquake_insurance_premiums": {
+      "max_deduction": 50000,
+      "description": "Earthquake insurance premium deduction (地震保険料控除)"
+    },
+    "medical_expenses": {
+      "threshold": 100000,
+      "max_deduction": 2000000,
+      "description": "Medical expense deduction above ¥100,000 (医療費控除)"
+    },
+    "donation": {
+      "threshold": 2000,
+      "description": "Donation deduction (寄付金控除)"
+    },
+    "small_enterprise_mutual_aid": {
+      "max_deduction": 840000,
+      "description": "Small enterprise mutual aid premium (小規模企業共済等掛金控除)"
+    }
+  },
+  "retirement_savings": {
+    "ideco": {
+      "employee_max": 276000,
+      "self_employed_max": 816000,
+      "description": "Individual Defined Contribution Pension (iDeCo)"
+    },
+    "corporate_pension": {
+      "description": "Company pension plans with tax benefits"
+    }
+  },
+  "special_exemptions": {
+    "disability": {
+      "ordinary": 270000,
+      "special": 400000,
+      "description": "Exemptions for disabled individuals"
+    },
+    "widow": {
+      "amount": 270000,
+      "income_limit": 5000000,
+      "description": "Exemption for widows"
+    },
+    "working_student": {
+      "amount": 270000,
+      "description": "Exemption for working students"
+    }
+  },
+  "prefectural_variations": {
+    "tokyo": {
+      "prefecture_tax_rate": 4,
+      "municipal_tax_rate": 6,
+      "notes": "Standard rates for Tokyo"
+    },
+    "osaka": {
+      "prefecture_tax_rate": 4,
+      "municipal_tax_rate": 6,
+      "notes": "Standard rates for Osaka"
+    },
+    "kyoto": {
+      "prefecture_tax_rate": 4,
+      "municipal_tax_rate": 6,
+      "notes": "Standard rates for Kyoto"
+    }
+  },
+  "filing_requirements": {
+    "income_threshold": 200000,
+    "filing_deadline": "March 15",
+    "payment_deadline": "March 15",
+    "extension_deadline": "April 15"
+  },
+  "withholding_tax": {
+    "employment_income": {
+      "method": "Progressive withholding",
+      "description": "Monthly withholding based on salary and dependents"
+    },
+    "year_end_adjustment": {
+      "deadline": "December",
+      "description": "Annual adjustment by employer (年末調整)"
+    }
+  },
+  "consumption_tax": {
+    "standard_rate": 10,
+    "reduced_rate": 8,
+    "items_reduced_rate": ["Food", "Newspapers"],
+    "registration_threshold": 10000000
+  },
+  "international_provisions": {
+    "foreign_tax_credit": {
+      "description": "Credit for taxes paid abroad"
+    },
+    "tax_treaties": {
+      "description": "Japan has tax treaties with many countries"
+    },
+    "foreign_earned_income": {
+      "exemption_threshold": 0,
+      "description": "Foreign income generally taxable in Japan for residents"
+    }
+  },
+  "last_updated": "2024-09-18",
+  "source": "National Tax Agency, Japan",
+  "notes": [
+    "Tax rates are for calendar year 2024",
+    "Special reconstruction tax of 2.1% applies to income tax",
+    "Social insurance rates vary by age and employment status",
+    "Inhabitant tax is calculated separately from national income tax",
+    "Employment income deduction is automatic for salary earners",
+    "Medical expenses above ¥100,000 are deductible",
+    "Year-end adjustment is typically done by employers"
+  ]
+}

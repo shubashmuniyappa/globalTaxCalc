@@ -1,0 +1,430 @@
+# Railway.app Service Configuration for GlobalTaxCalc.com
+# This file defines the deployment configuration for all microservices
+
+# Main API Gateway Service
+api-gateway:
+  build:
+    dockerfile: ./api-gateway/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3000
+    - HOST=0.0.0.0
+    - DOMAIN=globaltaxcalc.com
+
+    # Database Configuration
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # Service URLs (Railway internal networking)
+    - AUTH_SERVICE_URL=http://auth-service.railway.internal:3001
+    - TAX_ENGINE_URL=http://tax-engine.railway.internal:3002
+    - REPORT_SERVICE_URL=http://report-service.railway.internal:3003
+    - FILE_SERVICE_URL=http://file-service.railway.internal:3004
+    - MONITORING_SERVICE_URL=http://monitoring-service.railway.internal:3005
+
+    # Security Configuration
+    - JWT_SECRET=${{JWT_SECRET}}
+    - API_KEY=${{API_KEY}}
+    - CORS_ORIGINS=https://globaltaxcalc.com,https://www.globaltaxcalc.com,https://app.globaltaxcalc.com
+
+    # External Services
+    - SENTRY_DSN=${{SENTRY_DSN}}
+    - CLOUDFLARE_API_TOKEN=${{CLOUDFLARE_API_TOKEN}}
+
+    # Rate Limiting
+    - RATE_LIMIT_WINDOW_MS=900000
+    - RATE_LIMIT_MAX=1000
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+  scaling:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 80
+    targetMemory: 85
+
+# Authentication Service
+auth-service:
+  build:
+    dockerfile: ./auth-service/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3001
+    - HOST=0.0.0.0
+
+    # Database
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # JWT Configuration
+    - JWT_SECRET=${{JWT_SECRET}}
+    - JWT_EXPIRES_IN=24h
+    - REFRESH_TOKEN_EXPIRES_IN=30d
+
+    # Password Security
+    - BCRYPT_ROUNDS=12
+    - PASSWORD_MIN_LENGTH=8
+    - PASSWORD_REQUIRE_UPPERCASE=true
+    - PASSWORD_REQUIRE_LOWERCASE=true
+    - PASSWORD_REQUIRE_NUMBERS=true
+    - PASSWORD_REQUIRE_SYMBOLS=true
+
+    # Account Security
+    - MAX_LOGIN_ATTEMPTS=5
+    - LOCKOUT_TIME=900000
+    - SESSION_TIMEOUT=86400000
+
+    # Email Service
+    - SMTP_HOST=${{SMTP_HOST}}
+    - SMTP_PORT=${{SMTP_PORT}}
+    - SMTP_USER=${{SMTP_USER}}
+    - SMTP_PASSWORD=${{SMTP_PASSWORD}}
+    - FROM_EMAIL=noreply@globaltaxcalc.com
+
+    # OAuth Providers
+    - GOOGLE_CLIENT_ID=${{GOOGLE_CLIENT_ID}}
+    - GOOGLE_CLIENT_SECRET=${{GOOGLE_CLIENT_SECRET}}
+    - GITHUB_CLIENT_ID=${{GITHUB_CLIENT_ID}}
+    - GITHUB_CLIENT_SECRET=${{GITHUB_CLIENT_SECRET}}
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+  scaling:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPU: 75
+
+# Tax Engine Service
+tax-engine:
+  build:
+    dockerfile: ./tax-engine/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3002
+    - HOST=0.0.0.0
+
+    # Database
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # Tax Data Sources
+    - IRS_API_KEY=${{IRS_API_KEY}}
+    - CRA_API_KEY=${{CRA_API_KEY}}
+    - HMRC_API_KEY=${{HMRC_API_KEY}}
+    - BUNDESFINANZMINISTERIUM_API_KEY=${{BUNDESFINANZMINISTERIUM_API_KEY}}
+
+    # Cache Configuration
+    - CACHE_TTL=3600
+    - CACHE_MAX_SIZE=1000
+
+    # Calculation Limits
+    - MAX_INCOME=10000000
+    - MAX_DEDUCTIONS=1000000
+    - SUPPORTED_YEARS=2020,2021,2022,2023,2024
+
+    # Performance
+    - CALCULATION_TIMEOUT=30000
+    - MAX_CONCURRENT_CALCULATIONS=100
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 15s
+    retries: 3
+
+  scaling:
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPU: 70
+    targetMemory: 80
+
+# Report Service
+report-service:
+  build:
+    dockerfile: ./report-export-service/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3003
+    - HOST=0.0.0.0
+
+    # Database
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # Report Configuration
+    - MAX_REPORT_SIZE_MB=50
+    - CONCURRENT_REPORTS=5
+    - REPORT_TIMEOUT_MS=60000
+    - TEMP_DIR=/tmp/reports
+
+    # PDF Generation
+    - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    - PDF_QUALITY=high
+    - PDF_FORMAT=A4
+    - CHART_RENDER_TIMEOUT=10000
+
+    # Cloud Storage (for report files)
+    - AWS_ACCESS_KEY_ID=${{AWS_ACCESS_KEY_ID}}
+    - AWS_SECRET_ACCESS_KEY=${{AWS_SECRET_ACCESS_KEY}}
+    - AWS_REGION=${{AWS_REGION}}
+    - S3_BUCKET_NAME=${{S3_BUCKET_NAME}}
+
+    # Branding
+    - COMPANY_NAME=GlobalTaxCalc
+    - DEFAULT_BRAND_COLOR=#2563eb
+    - WATERMARK_ENABLED=true
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 20s
+    retries: 3
+
+  scaling:
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPU: 85
+    targetMemory: 90
+
+# File Processing Service
+file-service:
+  build:
+    dockerfile: ./file-processing-service/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3004
+    - HOST=0.0.0.0
+
+    # Database
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # File Upload Configuration
+    - MAX_FILE_SIZE=100MB
+    - ALLOWED_EXTENSIONS=csv,xlsx,xls,pdf,txt,json
+    - UPLOAD_PATH=/tmp/uploads
+    - VIRUS_SCAN_ENABLED=true
+
+    # Processing Configuration
+    - PROCESSING_TIMEOUT=300000
+    - MAX_CONCURRENT_UPLOADS=20
+    - QUARANTINE_SUSPICIOUS_FILES=true
+
+    # Cloud Storage
+    - AWS_ACCESS_KEY_ID=${{AWS_ACCESS_KEY_ID}}
+    - AWS_SECRET_ACCESS_KEY=${{AWS_SECRET_ACCESS_KEY}}
+    - AWS_REGION=${{AWS_REGION}}
+    - S3_BUCKET_NAME=${{S3_BUCKET_NAME}}
+
+    # Security
+    - ANTIVIRUS_API_KEY=${{ANTIVIRUS_API_KEY}}
+    - SCAN_ALL_UPLOADS=true
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 15s
+    retries: 3
+
+  scaling:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPU: 80
+
+# Monitoring & Health Service
+monitoring-service:
+  build:
+    dockerfile: ./monitoring-health-service/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3005
+    - HOST=0.0.0.0
+
+    # Database
+    - DATABASE_URL=${{DATABASE_URL}}
+    - REDIS_URL=${{REDIS_URL}}
+
+    # Prometheus Configuration
+    - PROMETHEUS_ENABLED=true
+    - PROMETHEUS_PORT=9090
+    - METRICS_PREFIX=globaltaxcalc
+    - COLLECT_DEFAULT_METRICS=true
+
+    # Health Check Configuration
+    - HEALTH_CHECK_INTERVAL=30000
+    - HEALTH_CHECK_TIMEOUT=10000
+    - DEPENDENCY_CHECK_ENABLED=true
+
+    # Alerting Configuration
+    - ALERTING_ENABLED=true
+    - ALERT_EMAIL_ENABLED=true
+    - ALERT_SLACK_ENABLED=true
+
+    # Email Alerts
+    - SMTP_HOST=${{SMTP_HOST}}
+    - SMTP_PORT=${{SMTP_PORT}}
+    - SMTP_USER=${{SMTP_USER}}
+    - SMTP_PASSWORD=${{SMTP_PASSWORD}}
+    - ALERT_EMAIL_FROM=alerts@globaltaxcalc.com
+    - ALERT_EMAIL_TO=admin@globaltaxcalc.com,ops@globaltaxcalc.com
+
+    # Slack Alerts
+    - SLACK_WEBHOOK_URL=${{SLACK_WEBHOOK_URL}}
+    - SLACK_CHANNEL=#alerts
+
+    # Sentry Integration
+    - SENTRY_ENABLED=true
+    - SENTRY_DSN=${{SENTRY_DSN}}
+    - SENTRY_ENVIRONMENT=production
+
+    # Performance Monitoring
+    - APM_ENABLED=true
+    - PERFORMANCE_BUDGET_P95=1000
+    - ERROR_RATE_THRESHOLD=0.05
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+  scaling:
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPU: 70
+
+# Frontend Application
+frontend:
+  build:
+    dockerfile: ./frontend/Dockerfile
+    context: .
+  environment:
+    - NODE_ENV=production
+    - PORT=3006
+    - HOST=0.0.0.0
+
+    # API Configuration
+    - NEXT_PUBLIC_API_URL=https://api.globaltaxcalc.com
+    - NEXT_PUBLIC_APP_URL=https://app.globaltaxcalc.com
+
+    # Analytics
+    - NEXT_PUBLIC_GA_ID=${{GA_ID}}
+    - NEXT_PUBLIC_HOTJAR_ID=${{HOTJAR_ID}}
+
+    # Feature Flags
+    - NEXT_PUBLIC_ENABLE_BETA_FEATURES=false
+    - NEXT_PUBLIC_ENABLE_CHAT_SUPPORT=true
+    - NEXT_PUBLIC_ENABLE_DARK_MODE=true
+
+    # Payment Integration
+    - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{STRIPE_PUBLISHABLE_KEY}}
+
+    # Social Login
+    - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{GOOGLE_CLIENT_ID}}
+    - NEXT_PUBLIC_GITHUB_CLIENT_ID=${{GITHUB_CLIENT_ID}}
+
+  healthcheck:
+    path: /health
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+  scaling:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 75
+
+# Shared Database Configuration
+database:
+  image: postgres:15-alpine
+  environment:
+    - POSTGRES_DB=globaltaxcalc
+    - POSTGRES_USER=globaltaxcalc
+    - POSTGRES_PASSWORD=${{DATABASE_PASSWORD}}
+    - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
+    - ./deployment/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U globaltaxcalc"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
+
+# Redis Cache
+redis:
+  image: redis:7-alpine
+  environment:
+    - REDIS_PASSWORD=${{REDIS_PASSWORD}}
+
+  command: redis-server --requirepass $REDIS_PASSWORD --appendonly yes
+
+  volumes:
+    - redis_data:/data
+
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+# Nginx Load Balancer / Reverse Proxy
+nginx:
+  build:
+    dockerfile: ./deployment/nginx/Dockerfile
+    context: .
+  environment:
+    - SSL_CERT_PATH=/etc/nginx/ssl/cert.pem
+    - SSL_KEY_PATH=/etc/nginx/ssl/key.pem
+    - DOMAIN=globaltaxcalc.com
+
+  ports:
+    - "80:80"
+    - "443:443"
+
+  depends_on:
+    - api-gateway
+    - frontend
+
+  volumes:
+    - ssl_certs:/etc/nginx/ssl
+    - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf
+
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+
+# Volume Definitions
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ssl_certs:
+    driver: local
+
+# Network Configuration
+networks:
+  globaltaxcalc:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,108 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Spike test: sudden traffic increases
+    - duration: 60
+      arrivalRate: 5
+      name: "Normal baseline"
+    - duration: 30
+      arrivalRate: 500  # Sudden spike
+      name: "Traffic spike"
+    - duration: 60
+      arrivalRate: 5
+      name: "Return to baseline"
+    - duration: 30
+      arrivalRate: 1000  # Even bigger spike
+      name: "Extreme traffic spike"
+    - duration: 120
+      arrivalRate: 5
+      name: "Long recovery period"
+
+  timeout: 30
+
+  # Spike test thresholds
+  ensure:
+    p95: 8000   # Allow very high response times during spikes
+    p99: 15000
+    maxErrorRate: 25  # Allow high error rate during extreme spikes
+
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+# Spike test scenarios - focus on quick, light operations
+scenarios:
+  - name: "Health Check Spike"
+    weight: 30
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+  - name: "Authentication Spike"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          expect:
+            - statusCode: 200
+
+  - name: "Quick Calculation Spike"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - post:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            income: 75000
+            country: "US"
+            filingStatus: "single"
+            year: 2023
+          expect:
+            - statusCode: 201
+
+  - name: "Data Retrieval Spike"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Metrics and Status Spike"
+    weight: 5
+    flow:
+      - get:
+          url: "/metrics"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/status"
+          expect:
+            - statusCode: 200

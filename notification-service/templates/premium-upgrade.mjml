@@ -1,0 +1,299 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{t "premium.subject"}}</mj-title>
+    <meta name="subject" content="{{t 'premium.subject'}}" />
+    <mj-preview>{{t "premium.preview"}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#333333" line-height="1.6" />
+      <mj-button background-color="#ffc107" color="#333333" border-radius="6px" font-size="16px" font-weight="600" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      .premium-gradient { background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); }
+      .feature-highlight { background: #fff9c4; border-left: 4px solid #ffc107; }
+      .pricing-card { background: #ffffff; border: 2px solid #ffc107; border-radius: 12px; }
+      .savings-badge { background: #28a745; color: white; border-radius: 20px; }
+    </mj-style>
+  </mj-head>
+
+  <mj-body background-color="#f8f9fa">
+    <!-- Header -->
+    <mj-section background-color="#ffffff" padding="20px 0">
+      <mj-column>
+        <mj-image src="{{asset 'images/logo-email.png'}}" alt="GlobalTaxCalc" width="200px" />
+      </mj-column>
+    </mj-section>
+
+    <!-- Premium Hero -->
+    <mj-section css-class="premium-gradient" background-color="#ffc107" padding="40px 20px">
+      <mj-column>
+        <mj-text align="center" color="#333333" font-size="28px" font-weight="bold" line-height="1.2">
+          🌟 {{t "premium.hero.title"}}
+        </mj-text>
+        <mj-text align="center" color="#333333" font-size="18px" padding-top="15px">
+          {{t "premium.hero.subtitle"}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Personal Message -->
+    <mj-section background-color="#ffffff" padding="40px 30px">
+      <mj-column>
+        <mj-text font-size="18px" color="#333333">
+          {{t "premium.greeting" firstName=firstName}},
+        </mj-text>
+        <mj-text>
+          {{t "premium.personal_message" calculationsUsed=userStats.calculationsUsed}}
+        </mj-text>
+        {{#if specialOffer}}
+          <mj-table css-class="savings-badge" width="100%" cellpadding="12">
+            <tr>
+              <td style="text-align: center; background: #28a745; color: white; border-radius: 8px; font-weight: bold;">
+                🎉 {{specialOffer.description}} - {{specialOffer.discount}}% OFF!
+              </td>
+            </tr>
+          </mj-table>
+        {{/if}}
+      </mj-column>
+    </mj-section>
+
+    <!-- Feature Comparison -->
+    <mj-section background-color="#f8f9fa" padding="40px 30px">
+      <mj-column>
+        <mj-text align="center" font-size="24px" font-weight="bold" color="#333333" padding-bottom="30px">
+          {{t "premium.features.title"}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Feature: Advanced Calculations -->
+    <mj-section background-color="#ffffff" padding="20px 30px">
+      <mj-column width="80px">
+        <mj-image src="{{asset 'images/icons/advanced-calc.png'}}" alt="Advanced Calculator" width="48px" />
+      </mj-column>
+      <mj-column width="520px">
+        <mj-text font-size="18px" font-weight="bold" color="#333333">
+          {{t "premium.features.advanced_calc.title"}}
+        </mj-text>
+        <mj-text color="#666666">
+          {{t "premium.features.advanced_calc.description"}}
+        </mj-text>
+        <mj-table width="100%" cellpadding="8">
+          <tr>
+            <td style="color: #dc3545; width: 20px;">❌</td>
+            <td style="color: #666666;">{{t "premium.features.advanced_calc.free_limitation"}}</td>
+          </tr>
+          <tr>
+            <td style="color: #28a745; width: 20px;">✅</td>
+            <td style="color: #28a745; font-weight: 600;">{{t "premium.features.advanced_calc.premium_benefit"}}</td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Feature: Tax Optimization -->
+    <mj-section background-color="#f8f9fa" padding="20px 30px">
+      <mj-column width="80px">
+        <mj-image src="{{asset 'images/icons/optimization.png'}}" alt="Tax Optimization" width="48px" />
+      </mj-column>
+      <mj-column width="520px">
+        <mj-text font-size="18px" font-weight="bold" color="#333333">
+          {{t "premium.features.optimization.title"}}
+        </mj-text>
+        <mj-text color="#666666">
+          {{t "premium.features.optimization.description"}}
+        </mj-text>
+        <mj-table width="100%" cellpadding="8">
+          <tr>
+            <td style="color: #dc3545; width: 20px;">❌</td>
+            <td style="color: #666666;">{{t "premium.features.optimization.free_limitation"}}</td>
+          </tr>
+          <tr>
+            <td style="color: #28a745; width: 20px;">✅</td>
+            <td style="color: #28a745; font-weight: 600;">{{t "premium.features.optimization.premium_benefit"}}</td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Feature: Priority Support -->
+    <mj-section background-color="#ffffff" padding="20px 30px">
+      <mj-column width="80px">
+        <mj-image src="{{asset 'images/icons/support.png'}}" alt="Priority Support" width="48px" />
+      </mj-column>
+      <mj-column width="520px">
+        <mj-text font-size="18px" font-weight="bold" color="#333333">
+          {{t "premium.features.support.title"}}
+        </mj-text>
+        <mj-text color="#666666">
+          {{t "premium.features.support.description"}}
+        </mj-text>
+        <mj-table width="100%" cellpadding="8">
+          <tr>
+            <td style="color: #ffc107; width: 20px;">⏰</td>
+            <td style="color: #666666;">{{t "premium.features.support.free_limitation"}}</td>
+          </tr>
+          <tr>
+            <td style="color: #28a745; width: 20px;">⚡</td>
+            <td style="color: #28a745; font-weight: 600;">{{t "premium.features.support.premium_benefit"}}</td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Pricing Section -->
+    <mj-section background-color="#f8f9fa" padding="40px 30px">
+      <mj-column>
+        <mj-text align="center" font-size="24px" font-weight="bold" color="#333333" padding-bottom="20px">
+          {{t "premium.pricing.title"}}
+        </mj-text>
+
+        <!-- Pricing Card -->
+        <mj-table css-class="pricing-card" width="100%" cellpadding="30" style="border: 2px solid #ffc107; border-radius: 12px; background: #ffffff;">
+          <tr>
+            <td style="text-align: center;">
+              <div style="font-size: 14px; color: #ffc107; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">
+                {{t "premium.pricing.plan_name"}}
+              </div>
+              <div style="font-size: 48px; font-weight: bold; color: #333333; margin-bottom: 5px;">
+                {{#if specialOffer}}
+                  <span style="text-decoration: line-through; color: #999999; font-size: 32px;">
+                    {{formatCurrency pricing.originalPrice pricing.currency}}
+                  </span>
+                  {{formatCurrency pricing.discountedPrice pricing.currency}}
+                {{else}}
+                  {{formatCurrency pricing.monthlyPrice pricing.currency}}
+                {{/if}}
+              </div>
+              <div style="font-size: 16px; color: #666666; margin-bottom: 20px;">
+                {{t "premium.pricing.per_month"}}
+              </div>
+              {{#if specialOffer}}
+                <div style="background: #28a745; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; font-size: 14px; font-weight: bold; margin-bottom: 20px;">
+                  {{t "premium.pricing.save"}} {{formatCurrency pricing.annualSavings pricing.currency}}
+                </div>
+              {{/if}}
+            </td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- CTA Section -->
+    <mj-section background-color="#ffffff" padding="40px 30px">
+      <mj-column>
+        <mj-text align="center" font-size="20px" font-weight="bold" color="#333333">
+          {{t "premium.cta.title"}}
+        </mj-text>
+        <mj-button href="{{url '/upgrade' utm_source='email' utm_medium='premium_upgrade' utm_campaign='upgrade_offer' user_id=userId}}"
+                   background-color="#ffc107" color="#333333" font-size="18px" padding="20px 0">
+          {{#if specialOffer}}
+            {{t "premium.cta.button_special"}} - {{specialOffer.discount}}% OFF
+          {{else}}
+            {{t "premium.cta.button"}}
+          {{/if}}
+        </mj-button>
+        <mj-text align="center" color="#666666" font-size="14px">
+          {{t "premium.cta.subtitle"}}
+        </mj-text>
+        {{#if pricing.moneyBackGuarantee}}
+          <mj-text align="center" color="#28a745" font-size="14px" font-weight="bold">
+            ✅ {{t "premium.cta.guarantee"}}
+          </mj-text>
+        {{/if}}
+      </mj-column>
+    </mj-section>
+
+    <!-- Social Proof -->
+    {{#if testimonials}}
+    <mj-section background-color="#f8f9fa" padding="40px 30px">
+      <mj-column>
+        <mj-text align="center" font-size="20px" font-weight="bold" color="#333333" padding-bottom="20px">
+          {{t "premium.testimonials.title"}}
+        </mj-text>
+
+        {{#each testimonials}}
+          <mj-table width="100%" cellpadding="20" style="background: #ffffff; border-radius: 8px; margin-bottom: 20px;">
+            <tr>
+              <td>
+                <div style="font-style: italic; color: #333333; margin-bottom: 15px;">
+                  "{{quote}}"
+                </div>
+                <div style="font-weight: bold; color: #666666;">
+                  - {{name}}, {{title}}
+                </div>
+                <div style="color: #ffc107; font-size: 16px; margin-top: 8px;">
+                  {{#each stars}}⭐{{/each}}
+                </div>
+              </td>
+            </tr>
+          </mj-table>
+        {{/each}}
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- FAQ Section -->
+    <mj-section background-color="#ffffff" padding="30px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="20px">
+          ❓ {{t "premium.faq.title"}}
+        </mj-text>
+
+        <mj-text font-weight="bold" color="#333333">
+          {{t "premium.faq.question1"}}
+        </mj-text>
+        <mj-text color="#666666" padding-bottom="15px">
+          {{t "premium.faq.answer1"}}
+        </mj-text>
+
+        <mj-text font-weight="bold" color="#333333">
+          {{t "premium.faq.question2"}}
+        </mj-text>
+        <mj-text color="#666666" padding-bottom="15px">
+          {{t "premium.faq.answer2"}}
+        </mj-text>
+
+        <mj-text font-weight="bold" color="#333333">
+          {{t "premium.faq.question3"}}
+        </mj-text>
+        <mj-text color="#666666">
+          {{t "premium.faq.answer3"}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Urgency Section -->
+    {{#if specialOffer.expiresAt}}
+    <mj-section background-color="#fff3cd" padding="30px" border="1px solid #ffeaa7">
+      <mj-column>
+        <mj-text align="center" font-size="18px" font-weight="bold" color="#856404">
+          ⏰ {{t "premium.urgency.title"}}
+        </mj-text>
+        <mj-text align="center" color="#856404">
+          {{t "premium.urgency.message" expires=(formatDate specialOffer.expiresAt "MMMM Do, YYYY 'at' h:mm A")}}
+        </mj-text>
+        <mj-button href="{{url '/upgrade'}}" background-color="#856404" font-size="16px" padding="15px 0">
+          {{t "premium.urgency.button"}}
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Footer -->
+    <mj-section background-color="#333333" padding="30px">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="14px">
+          © {{currentYear}} GlobalTaxCalc. {{t "common.all_rights_reserved"}}
+        </mj-text>
+        <mj-text align="center" color="#cccccc" font-size="12px">
+          {{companyAddress}}
+        </mj-text>
+        <mj-text align="center" font-size="12px" padding-top="15px">
+          <a href="{{unsubscribeUrl}}" style="color: #cccccc;">{{t "common.unsubscribe"}}</a> |
+          <a href="{{preferencesUrl}}" style="color: #cccccc;">{{t "common.preferences"}}</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

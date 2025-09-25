@@ -1,0 +1,251 @@
+{
+  "country": {
+    "code": "IN",
+    "name": "India",
+    "currency": "INR",
+    "currency_symbol": "₹",
+    "tax_authority": "Income Tax Department",
+    "financial_year": "2024-25",
+    "assessment_year": "2025-26"
+  },
+  "tax_regimes": {
+    "old": {
+      "name": "Old Tax Regime",
+      "basic_exemption_limit": 250000,
+      "senior_citizen_limit": 300000,
+      "super_senior_citizen_limit": 500000,
+      "tax_brackets": [
+        {
+          "min_income": 0,
+          "max_income": 250000,
+          "rate": 0,
+          "description": "No tax up to ₹2.5 lakh"
+        },
+        {
+          "min_income": 250000,
+          "max_income": 500000,
+          "rate": 5,
+          "description": "5% on ₹2.5-5 lakh"
+        },
+        {
+          "min_income": 500000,
+          "max_income": 1000000,
+          "rate": 20,
+          "description": "20% on ₹5-10 lakh"
+        },
+        {
+          "min_income": 1000000,
+          "max_income": null,
+          "rate": 30,
+          "description": "30% above ₹10 lakh"
+        }
+      ],
+      "deductions": {
+        "standard_deduction": {
+          "amount": 50000,
+          "description": "Standard deduction for salaried individuals",
+          "category": "standard"
+        },
+        "section_80c": {
+          "max_amount": 150000,
+          "description": "Investment deductions (PPF, ELSS, LIC, etc.)",
+          "category": "investment",
+          "instruments": [
+            "Employee Provident Fund (EPF)",
+            "Public Provident Fund (PPF)",
+            "Equity Linked Savings Scheme (ELSS)",
+            "Life Insurance Premium",
+            "Tax Saving Fixed Deposits",
+            "National Savings Certificate (NSC)",
+            "Unit Linked Insurance Plan (ULIP)"
+          ]
+        },
+        "section_80d": {
+          "individual_max": 25000,
+          "family_max": 25000,
+          "senior_citizen_max": 50000,
+          "description": "Health insurance premium deduction",
+          "category": "health"
+        },
+        "section_80ccd_1b": {
+          "max_amount": 50000,
+          "description": "Additional NPS contribution",
+          "category": "pension"
+        },
+        "section_80e": {
+          "max_amount": null,
+          "description": "Education loan interest",
+          "category": "education"
+        },
+        "section_80g": {
+          "description": "Donations to charitable institutions",
+          "category": "charity",
+          "limits": {
+            "100_percent_deduction": ["PM National Relief Fund", "CM Relief Fund"],
+            "50_percent_deduction": ["Government approved NGOs"]
+          }
+        }
+      }
+    },
+    "new": {
+      "name": "New Tax Regime",
+      "basic_exemption_limit": 300000,
+      "tax_brackets": [
+        {
+          "min_income": 0,
+          "max_income": 300000,
+          "rate": 0,
+          "description": "No tax up to ₹3 lakh"
+        },
+        {
+          "min_income": 300000,
+          "max_income": 700000,
+          "rate": 5,
+          "description": "5% on ₹3-7 lakh"
+        },
+        {
+          "min_income": 700000,
+          "max_income": 1000000,
+          "rate": 10,
+          "description": "10% on ₹7-10 lakh"
+        },
+        {
+          "min_income": 1000000,
+          "max_income": 1200000,
+          "rate": 15,
+          "description": "15% on ₹10-12 lakh"
+        },
+        {
+          "min_income": 1200000,
+          "max_income": 1500000,
+          "rate": 20,
+          "description": "20% on ₹12-15 lakh"
+        },
+        {
+          "min_income": 1500000,
+          "max_income": null,
+          "rate": 30,
+          "description": "30% above ₹15 lakh"
+        }
+      ],
+      "deductions": {
+        "standard_deduction": {
+          "amount": 50000,
+          "description": "Standard deduction for salaried individuals",
+          "category": "standard"
+        }
+      }
+    }
+  },
+  "surcharge": {
+    "individual_threshold": 5000000,
+    "high_threshold": 10000000,
+    "very_high_threshold": 20000000,
+    "highest_threshold": 50000000,
+    "rates": {
+      "individual": 10,
+      "high": 15,
+      "very_high": 25,
+      "highest": 37
+    }
+  },
+  "cess": {
+    "health_education_cess": {
+      "rate": 4,
+      "description": "Health and Education Cess on income tax and surcharge"
+    }
+  },
+  "social_contributions": {
+    "employee_provident_fund": {
+      "rate": 12,
+      "ceiling": 180000,
+      "description": "Employee contribution to EPF (12% of basic salary)"
+    },
+    "employee_state_insurance": {
+      "rate": 0.75,
+      "ceiling": 252000,
+      "description": "ESI contribution (0.75% of salary up to ₹21,000/month)"
+    }
+  },
+  "rebates": {
+    "section_87a": {
+      "income_limit": 500000,
+      "rebate_amount": 12500,
+      "description": "Tax rebate for income up to ₹5 lakh (old regime)"
+    },
+    "section_87a_new": {
+      "income_limit": 700000,
+      "rebate_amount": 25000,
+      "description": "Tax rebate for income up to ₹7 lakh (new regime)"
+    }
+  },
+  "tds_rates": {
+    "salary": {
+      "threshold": 250000,
+      "description": "TDS on salary based on estimated annual income"
+    },
+    "interest": {
+      "threshold": 40000,
+      "rate": 10,
+      "description": "TDS on interest income"
+    },
+    "dividend": {
+      "threshold": 5000,
+      "rate": 10,
+      "description": "TDS on dividend income"
+    }
+  },
+  "hra_exemption": {
+    "metro_cities": ["Mumbai", "Delhi", "Chennai", "Kolkata"],
+    "metro_percentage": 50,
+    "non_metro_percentage": 40,
+    "basic_salary_deduction": 10
+  },
+  "special_provisions": {
+    "leave_travel_allowance": {
+      "max_exemption": "Actual travel expenses",
+      "conditions": ["Domestic travel only", "Once in 2 years"]
+    },
+    "meal_vouchers": {
+      "max_exemption": 2200,
+      "description": "Monthly meal voucher exemption"
+    },
+    "professional_tax": {
+      "max_deduction": 2500,
+      "description": "Professional tax paid to state government"
+    }
+  },
+  "compliance_dates": {
+    "due_dates": {
+      "individuals": "July 31",
+      "audit_cases": "October 31",
+      "companies": "September 30"
+    },
+    "advance_tax_due_dates": [
+      "June 15",
+      "September 15",
+      "December 15",
+      "March 15"
+    ]
+  },
+  "penalties": {
+    "late_filing": {
+      "upto_return_date": 0,
+      "upto_december_31": 5000,
+      "after_december_31": 10000
+    },
+    "under_reporting": {
+      "rate": 50,
+      "description": "50% of tax on under-reported income"
+    }
+  },
+  "last_updated": "2024-09-18",
+  "source": "Income Tax Department, Government of India",
+  "notes": [
+    "Tax rates applicable for Financial Year 2024-25 (Assessment Year 2025-26)",
+    "Taxpayers can choose between old and new tax regime",
+    "New regime has lower tax rates but restricted deductions",
+    "Senior citizens (60-80 years) get higher basic exemption",
+    "Super senior citizens (80+ years) get additional exemption benefits"
+  ]
+}

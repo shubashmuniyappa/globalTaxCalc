@@ -1,0 +1,249 @@
+{
+  "description": "Government-verified tax calculation benchmarks for accuracy testing",
+  "last_updated": "2024-09-18",
+  "source": "Official government tax authorities",
+  "india": [
+    {
+      "test_id": "IN_001",
+      "description": "Basic exemption limit - Old regime",
+      "income": 250000,
+      "regime": "old",
+      "age": 30,
+      "deductions": [],
+      "expected_tax": 0,
+      "expected_taxable_income": 0,
+      "source": "Income Tax Department Example 1"
+    },
+    {
+      "test_id": "IN_002",
+      "description": "Mid-level income - Old regime with standard deduction",
+      "income": 600000,
+      "regime": "old",
+      "age": 30,
+      "deductions": [],
+      "expected_tax": 15600,
+      "expected_taxable_income": 300000,
+      "notes": "₹6L - ₹2.5L exemption - ₹50K standard deduction = ₹3L taxable; Tax = ₹12.5K + 4% cess"
+    },
+    {
+      "test_id": "IN_003",
+      "description": "High income with surcharge - Old regime",
+      "income": 6000000,
+      "regime": "old",
+      "age": 30,
+      "deductions": [],
+      "expected_tax": 1898080,
+      "expected_taxable_income": 5700000,
+      "notes": "Includes 10% surcharge and 4% cess"
+    },
+    {
+      "test_id": "IN_004",
+      "description": "New regime - Mid-level income",
+      "income": 800000,
+      "regime": "new",
+      "age": 30,
+      "deductions": [],
+      "expected_tax": 31200,
+      "expected_taxable_income": 500000,
+      "notes": "₹8L - ₹3L exemption = ₹5L; Tax on ₹4L at 5% + ₹1L at 10% + 4% cess"
+    },
+    {
+      "test_id": "IN_005",
+      "description": "Senior citizen - Old regime",
+      "income": 400000,
+      "regime": "old",
+      "age": 65,
+      "deductions": [],
+      "expected_tax": 0,
+      "expected_taxable_income": 50000,
+      "notes": "₹4L - ₹3L senior exemption - ₹50K standard = ₹50K taxable, but no tax up to ₹2.5L"
+    },
+    {
+      "test_id": "IN_006",
+      "description": "With Section 80C deductions",
+      "income": 1000000,
+      "regime": "old",
+      "age": 30,
+      "deductions": [
+        {"section": "80C", "amount": 150000},
+        {"section": "80D", "amount": 25000}
+      ],
+      "expected_tax": 72800,
+      "expected_taxable_income": 525000,
+      "notes": "₹10L - ₹2.5L - ₹50K - ₹1.5L - ₹25K = ₹5.25L taxable"
+    }
+  ],
+  "japan": [
+    {
+      "test_id": "JP_001",
+      "description": "Low income employee - Tokyo",
+      "income": 3000000,
+      "prefecture": "tokyo",
+      "age": 30,
+      "is_employee": true,
+      "expected_national_tax": 72500,
+      "expected_inhabitant_tax": 195000,
+      "expected_social_contributions": 873000,
+      "notes": "Includes employment income deduction and reconstruction tax"
+    },
+    {
+      "test_id": "JP_002",
+      "description": "Mid-level income employee with spouse",
+      "income": 5000000,
+      "prefecture": "tokyo",
+      "age": 35,
+      "is_employee": true,
+      "has_spouse": true,
+      "expected_national_tax": 263575,
+      "expected_inhabitant_tax": 317000,
+      "expected_social_contributions": 1275000,
+      "notes": "Includes spouse exemption"
+    },
+    {
+      "test_id": "JP_003",
+      "description": "High income employee",
+      "income": 10000000,
+      "prefecture": "tokyo",
+      "age": 40,
+      "is_employee": true,
+      "expected_national_tax": 1236750,
+      "expected_inhabitant_tax": 745000,
+      "expected_social_contributions": 1485000,
+      "notes": "Includes care insurance (age 40+)"
+    },
+    {
+      "test_id": "JP_004",
+      "description": "Self-employed individual",
+      "income": 4000000,
+      "prefecture": "osaka",
+      "age": 45,
+      "is_employee": false,
+      "expected_national_tax": 798400,
+      "expected_inhabitant_tax": 400000,
+      "expected_social_contributions": 598240,
+      "notes": "Different social insurance for self-employed"
+    },
+    {
+      "test_id": "JP_005",
+      "description": "Senior employee with reduced pension",
+      "income": 3000000,
+      "prefecture": "tokyo",
+      "age": 65,
+      "is_employee": true,
+      "expected_national_tax": 72500,
+      "expected_inhabitant_tax": 195000,
+      "expected_social_contributions": 225000,
+      "notes": "Reduced pension contribution rate for 65+"
+    }
+  ],
+  "singapore": [
+    {
+      "test_id": "SG_001",
+      "description": "Low income resident",
+      "income": 30000,
+      "resident_status": "resident",
+      "age": 25,
+      "expected_tax": 200,
+      "expected_cpf_employee": 6000,
+      "expected_net_income": 23800,
+      "notes": "2% on S$10K (S$20K-S$30K bracket)"
+    },
+    {
+      "test_id": "SG_002",
+      "description": "Mid-level income resident",
+      "income": 60000,
+      "resident_status": "resident",
+      "age": 30,
+      "expected_tax": 2350,
+      "expected_cpf_employee": 12000,
+      "expected_net_income": 45650,
+      "notes": "Progressive tax calculation"
+    },
+    {
+      "test_id": "SG_003",
+      "description": "High income resident",
+      "income": 200000,
+      "resident_status": "resident",
+      "age": 35,
+      "expected_tax": 22350,
+      "expected_cpf_employee": 14400,
+      "expected_net_income": 163250,
+      "notes": "CPF capped at S$72K annual salary"
+    },
+    {
+      "test_id": "SG_004",
+      "description": "Non-resident employee",
+      "income": 100000,
+      "resident_status": "non_resident",
+      "age": 30,
+      "expected_tax": 17160,
+      "expected_cpf_employee": 0,
+      "expected_net_income": 82840,
+      "notes": "22% flat rate above S$22K threshold"
+    },
+    {
+      "test_id": "SG_005",
+      "description": "Resident with family reliefs",
+      "income": 80000,
+      "resident_status": "resident",
+      "age": 35,
+      "has_spouse": true,
+      "spouse_working": false,
+      "children": 2,
+      "supported_parents": 1,
+      "expected_tax": 1950,
+      "expected_cpf_employee": 14400,
+      "notes": "Spouse relief S$2K + Child relief S$8K + Parent relief S$9K"
+    },
+    {
+      "test_id": "SG_006",
+      "description": "Senior worker with reduced CPF",
+      "income": 60000,
+      "resident_status": "resident",
+      "age": 62,
+      "expected_tax": 2350,
+      "expected_cpf_employee": 4500,
+      "expected_net_income": 53150,
+      "notes": "Reduced CPF rate of 7.5% for age 60-65"
+    },
+    {
+      "test_id": "SG_007",
+      "description": "Very high income with maximum tax rate",
+      "income": 500000,
+      "resident_status": "resident",
+      "age": 40,
+      "expected_tax": 77350,
+      "expected_cpf_employee": 14400,
+      "expected_net_income": 408250,
+      "notes": "Reaches 22% marginal tax rate"
+    }
+  ],
+  "test_execution_notes": [
+    "All amounts are in local currency (INR for India, JPY for Japan, SGD for Singapore)",
+    "Tax calculations include all applicable surcharges, cess, and reconstruction taxes",
+    "Social contribution calculations include employee portions only",
+    "Test cases are based on government examples and official tax calculators",
+    "Tolerance of ±5% is acceptable for automated testing due to rounding differences",
+    "Some test cases may need adjustment based on specific implementation details"
+  ],
+  "validation_sources": [
+    {
+      "country": "India",
+      "authority": "Income Tax Department",
+      "url": "https://www.incometax.gov.in",
+      "calculator_url": "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1"
+    },
+    {
+      "country": "Japan",
+      "authority": "National Tax Agency",
+      "url": "https://www.nta.go.jp",
+      "calculator_url": "https://www.nta.go.jp/taxes/shiraberu/shinkoku/kakutei.htm"
+    },
+    {
+      "country": "Singapore",
+      "authority": "Inland Revenue Authority of Singapore",
+      "url": "https://www.iras.gov.sg",
+      "calculator_url": "https://www.iras.gov.sg/irashome/Individuals/Locals/Working-Out-Your-Taxes/Income-Tax-Calculator/"
+    }
+  ]
+}

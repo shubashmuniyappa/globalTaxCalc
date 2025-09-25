@@ -1,0 +1,380 @@
+# Artillery Performance Testing Configuration for Frontend
+# Tests frontend performance and user journey scenarios
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up"
+
+    # Gradual ramp-up
+    - duration: 300
+      arrivalRate: 5
+      rampTo: 25
+      name: "Ramp up load"
+
+    # Sustained load
+    - duration: 600
+      arrivalRate: 25
+      name: "Sustained load"
+
+    # Peak load
+    - duration: 180
+      arrivalRate: 50
+      name: "Peak load"
+
+    # Cool down
+    - duration: 120
+      arrivalRate: 50
+      rampTo: 5
+      name: "Cool down"
+
+  # Plugin configuration
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+    ensure:
+      thresholds:
+        - http.response_time.p95: 3000
+        - http.response_time.p99: 5000
+        - http.codes.200: 90
+        - http.codes.404: 0
+        - http.codes.500: 0
+
+  # Payload configuration
+  payload:
+    path: "./test-data/user-scenarios.csv"
+    fields:
+      - email
+      - password
+      - income
+      - state
+      - filingStatus
+
+  # Default headers
+  defaults:
+    headers:
+      User-Agent: "Artillery Performance Test"
+      Accept: "application/json"
+
+# Test scenarios
+scenarios:
+  # User registration and onboarding flow
+  - name: "User Registration Flow"
+    weight: 15
+    flow:
+      - get:
+          url: "/"
+          name: "Load homepage"
+          capture:
+            - header: "set-cookie"
+              as: "sessionCookie"
+
+      - think: 2
+
+      - get:
+          url: "/register"
+          name: "Load registration page"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+
+      - think: 5
+
+      - post:
+          url: "/api/auth/register"
+          name: "Submit registration"
+          headers:
+            Cookie: "{{ sessionCookie }}"
+            Content-Type: "application/json"
+          json:
+            firstName: "Test"
+            lastName: "User"
+            email: "{{ email }}"
+            password: "{{ password }}"
+            country: "US"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - think: 2
+
+      - get:
+          url: "/dashboard"
+          name: "Load dashboard after registration"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+  # Tax calculation user journey
+  - name: "Tax Calculation Journey"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/auth/login"
+          name: "User login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - think: 1
+
+      - get:
+          url: "/calculator"
+          name: "Load tax calculator"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 10  # User reads and fills form
+
+      - post:
+          url: "/api/tax/calculate"
+          name: "Calculate taxes"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            income: "{{ income }}"
+            filingStatus: "{{ filingStatus }}"
+            state: "{{ state }}"
+            deductions:
+              standard: 14600
+          capture:
+            - json: "$.calculation.id"
+              as: "calculationId"
+
+      - think: 5  # User reviews results
+
+      - post:
+          url: "/api/tax/calculations/{{ calculationId }}/save"
+          name: "Save calculation"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Test Calculation {{ $randomString() }}"
+
+      - get:
+          url: "/api/tax/calculations"
+          name: "Load calculation history"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+  # Premium subscription flow
+  - name: "Premium Subscription Flow"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          name: "User login for subscription"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/pricing"
+          name: "Load pricing page"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 15  # User evaluates plans
+
+      - get:
+          url: "/checkout?plan=premium_monthly"
+          name: "Load checkout page"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 20  # User fills payment form
+
+      - post:
+          url: "/api/payment/process"
+          name: "Process payment"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            planId: "premium_monthly"
+            paymentMethod:
+              type: "card"
+              card:
+                number: "4242424242424242"
+                expMonth: 12
+                expYear: 2025
+                cvc: "123"
+
+  # Multi-country calculation scenario
+  - name: "Multi-Country Tax Calculation"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          name: "Login for multi-country"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/calculator?country=CA"
+          name: "Load Canadian calculator"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 8
+
+      - post:
+          url: "/api/tax/calculate"
+          name: "Calculate Canadian taxes"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            income: "{{ income }}"
+            country: "CA"
+            province: "ON"
+            rrspContribution: 5000
+
+      - think: 3
+
+      - get:
+          url: "/calculator?country=UK"
+          name: "Switch to UK calculator"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 8
+
+      - post:
+          url: "/api/tax/calculate"
+          name: "Calculate UK taxes"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            income: "{{ income }}"
+            country: "UK"
+            taxYear: "2024-25"
+            pensionContribution: 3000
+
+  # Document upload and processing
+  - name: "Document Upload Flow"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          name: "Login for document upload"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/documents"
+          name: "Load documents page"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 5
+
+      - post:
+          url: "/api/documents/upload"
+          name: "Upload tax document"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          formData:
+            file: "./test-files/sample-w2.pdf"
+            documentType: "w2"
+            taxYear: "2024"
+          capture:
+            - json: "$.document.id"
+              as: "documentId"
+
+      - loop:
+          - get:
+              url: "/api/documents/{{ documentId }}/status"
+              name: "Check processing status"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+          - think: 2
+        while: "{{ $loopCount < 10 }}"
+
+  # Dashboard and analytics browsing
+  - name: "Dashboard Analytics Browsing"
+    weight: 5
+    flow:
+      - post:
+          url: "/api/auth/login"
+          name: "Login for dashboard"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      - get:
+          url: "/dashboard"
+          name: "Load main dashboard"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 5
+
+      - get:
+          url: "/api/analytics/user-summary"
+          name: "Load user analytics"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 3
+
+      - get:
+          url: "/api/analytics/tax-comparison"
+          name: "Load tax comparison data"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 5
+
+      - get:
+          url: "/reports"
+          name: "Load reports page"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - think: 8
+
+      - post:
+          url: "/api/reports/generate"
+          name: "Generate tax report"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            reportType: "annual_summary"
+            format: "pdf"
+            year: 2024
+
+# Custom functions for data generation
+functions:
+  generateRandomIncome: |
+    return Math.floor(Math.random() * 200000) + 30000;
+
+  generateRandomState: |
+    const states = ['CA', 'NY', 'TX', 'FL', 'IL', 'PA', 'OH'];
+    return states[Math.floor(Math.random() * states.length)];
+
+  generateFilingStatus: |
+    const statuses = ['single', 'married-jointly', 'married-separately', 'head-of-household'];
+    return statuses[Math.floor(Math.random() * statuses.length)];

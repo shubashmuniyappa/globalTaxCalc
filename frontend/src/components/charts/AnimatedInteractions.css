@@ -1,0 +1,672 @@
+/* Animated Interactions Styles */
+:root {
+  --animation-primary: #3b82f6;
+  --animation-success: #10b981;
+  --animation-warning: #f59e0b;
+  --animation-error: #ef4444;
+  --animation-text: #374151;
+  --animation-text-light: #6b7280;
+  --animation-bg: #ffffff;
+  --animation-border: #e5e7eb;
+  --animation-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Animated Counter */
+.animated-counter {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--animation-primary);
+  transition: color 0.3s ease;
+}
+
+.animated-counter.currency {
+  color: var(--animation-success);
+}
+
+.animated-counter.percentage {
+  color: var(--animation-warning);
+}
+
+.animated-counter.number {
+  color: var(--animation-text);
+}
+
+/* Animated Progress Bar */
+.animated-progress-container {
+  width: 100%;
+  margin: 8px 0;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--animation-text);
+}
+
+.progress-track {
+  position: relative;
+  background-color: var(--animation-border);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  position: relative;
+  background: linear-gradient(90deg, var(--animation-primary), var(--animation-success));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Animated Tooltip */
+.tooltip-trigger {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.animated-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  max-width: 250px;
+  word-wrap: break-word;
+}
+
+.tooltip-content {
+  background: rgba(17, 24, 39, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: var(--animation-shadow);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+
+.tooltip-arrow-top {
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: rgba(17, 24, 39, 0.95);
+}
+
+.tooltip-arrow-bottom {
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: rgba(17, 24, 39, 0.95);
+}
+
+.tooltip-arrow-left {
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: rgba(17, 24, 39, 0.95);
+}
+
+.tooltip-arrow-right {
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: rgba(17, 24, 39, 0.95);
+}
+
+/* Hover Scale */
+.hover-scale {
+  display: inline-block;
+  cursor: pointer;
+  will-change: transform;
+}
+
+/* Magnetic Effect */
+.magnetic-effect {
+  display: inline-block;
+  cursor: pointer;
+  will-change: transform;
+}
+
+/* Ripple Effect */
+.ripple-container {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: scale(0);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* Animated FAB */
+.animated-fab {
+  position: fixed;
+  border-radius: 28px;
+  cursor: pointer;
+  box-shadow: var(--animation-shadow);
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.3s ease;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.animated-fab:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.fab-small {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+}
+
+.fab-medium {
+  width: 56px;
+  height: 56px;
+  padding: 16px;
+}
+
+.fab-large {
+  width: 72px;
+  height: 72px;
+  padding: 20px;
+}
+
+.fab-bottom-right {
+  bottom: 24px;
+  right: 24px;
+}
+
+.fab-bottom-left {
+  bottom: 24px;
+  left: 24px;
+}
+
+.fab-top-right {
+  top: 24px;
+  right: 24px;
+}
+
+.fab-top-left {
+  top: 24px;
+  left: 24px;
+}
+
+.fab-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.fab-label {
+  font-size: 14px;
+  overflow: hidden;
+}
+
+/* Pulse Effect */
+.pulse-container {
+  position: relative;
+  display: inline-block;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.pulse-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stagger Container */
+.stagger-container {
+  display: block;
+}
+
+/* Particle System */
+.particle-system {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Keyframes */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-down {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rotate-in {
+  0% {
+    transform: rotate(-180deg) scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Utility Animation Classes */
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out;
+}
+
+.animate-rotate-in {
+  animation: rotate-in 0.6s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.hover-rotate {
+  transition: transform 0.3s ease;
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+}
+
+.hover-pulse {
+  transition: all 0.3s ease;
+}
+
+.hover-pulse:hover {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Loading States */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: loading-dots 1.4s infinite ease-in-out both;
+}
+
+.loading-dots::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: loading-dots 1.4s infinite ease-in-out both;
+  animation-delay: -0.16s;
+}
+
+@keyframes loading-dots {
+  0%, 80%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .animated-fab {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .fab-medium {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+  }
+
+  .fab-large {
+    width: 56px;
+    height: 56px;
+    padding: 16px;
+  }
+
+  .animated-tooltip {
+    max-width: 200px;
+  }
+
+  .tooltip-content {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .progress-label {
+    font-size: 13px;
+  }
+
+  .fab-label {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .animated-fab {
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .fab-medium {
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+  }
+
+  .fab-icon {
+    font-size: 18px;
+  }
+
+  .animated-tooltip {
+    max-width: 180px;
+  }
+
+  .particle-system {
+    display: none; /* Hide particles on very small screens for performance */
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --animation-text: #f8fafc;
+    --animation-text-light: #94a3b8;
+    --animation-bg: #0f172a;
+    --animation-border: #334155;
+  }
+
+  .tooltip-content {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(51, 65, 85, 0.5);
+  }
+
+  .tooltip-arrow-top {
+    border-top-color: rgba(15, 23, 42, 0.95);
+  }
+
+  .tooltip-arrow-bottom {
+    border-bottom-color: rgba(15, 23, 42, 0.95);
+  }
+
+  .tooltip-arrow-left {
+    border-left-color: rgba(15, 23, 42, 0.95);
+  }
+
+  .tooltip-arrow-right {
+    border-right-color: rgba(15, 23, 42, 0.95);
+  }
+
+  .progress-track {
+    background-color: #334155;
+  }
+
+  .loading-skeleton {
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .tooltip-content {
+    background: black;
+    border: 2px solid white;
+  }
+
+  .progress-fill {
+    background: black;
+  }
+
+  .animated-fab {
+    border: 2px solid white;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .progress-fill::after,
+  .loading-skeleton,
+  .loading-dots::before,
+  .loading-dots::after,
+  .particle,
+  .pulse-ring {
+    animation: none !important;
+  }
+
+  .hover-scale:hover,
+  .hover-lift:hover,
+  .magnetic-effect {
+    transform: none !important;
+  }
+
+  .ripple {
+    display: none;
+  }
+}

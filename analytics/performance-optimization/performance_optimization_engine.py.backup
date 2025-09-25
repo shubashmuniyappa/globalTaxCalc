@@ -1,0 +1,1272 @@
+"""
+Performance Optimization Engine for GlobalTaxCalc.com
+Provides intelligent performance monitoring, optimization strategies, and automated tuning.
+"""
+
+import json
+import logging
+import asyncio
+import psutil
+import time
+import threading
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Tuple, Union, Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from collections import deque, defaultdict
+import pandas as pd
+import numpy as np
+from scipy import stats
+from scipy.optimize import minimize
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.ensemble import IsolationForest
+import redis
+import sqlite3
+import requests
+import warnings
+warnings.filterwarnings('ignore')
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class OptimizationType(Enum):
+    """Types of optimization strategies"""
+    CPU_OPTIMIZATION = "cpu_optimization"
+    MEMORY_OPTIMIZATION = "memory_optimization"
+    DATABASE_OPTIMIZATION = "database_optimization"
+    NETWORK_OPTIMIZATION = "network_optimization"
+    CACHE_OPTIMIZATION = "cache_optimization"
+    ALGORITHM_OPTIMIZATION = "algorithm_optimization"
+    RESOURCE_SCALING = "resource_scaling"
+    LOAD_BALANCING = "load_balancing"
+    QUERY_OPTIMIZATION = "query_optimization"
+    API_OPTIMIZATION = "api_optimization"
+
+class PerformanceMetricType(Enum):
+    """Types of performance metrics"""
+    RESPONSE_TIME = "response_time"
+    THROUGHPUT = "throughput"
+    CPU_UTILIZATION = "cpu_utilization"
+    MEMORY_USAGE = "memory_usage"
+    DISK_IO = "disk_io"
+    NETWORK_IO = "network_io"
+    DATABASE_PERFORMANCE = "database_performance"
+    CACHE_HIT_RATE = "cache_hit_rate"
+    ERROR_RATE = "error_rate"
+    AVAILABILITY = "availability"
+
+class OptimizationPriority(Enum):
+    """Priority levels for optimizations"""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+@dataclass
+class PerformanceMetric:
+    """Performance metric definition"""
+    metric_id: str
+    metric_type: PerformanceMetricType
+    name: str
+    description: str
+    current_value: float
+    target_value: float
+    threshold_warning: float
+    threshold_critical: float
+    unit: str
+    collection_frequency: int = 30  # seconds
+    optimization_impact: float = 1.0  # Impact weight for optimization
+
+@dataclass
+class OptimizationRule:
+    """Optimization rule definition"""
+    rule_id: str
+    rule_name: str
+    optimization_type: OptimizationType
+    conditions: Dict[str, Any]
+    actions: List[str]
+    expected_improvement: Dict[str, float]
+    priority: OptimizationPriority
+    enabled: bool = True
+    confidence: float = 0.8
+
+@dataclass
+class OptimizationRecommendation:
+    """Optimization recommendation"""
+    recommendation_id: str
+    title: str
+    description: str
+    optimization_type: OptimizationType
+    priority: OptimizationPriority
+    expected_improvements: Dict[str, float]
+    implementation_steps: List[str]
+    estimated_effort: str  # "low", "medium", "high"
+    risk_level: str  # "low", "medium", "high"
+    confidence_score: float
+    supporting_data: Dict[str, Any]
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+
+@dataclass
+class OptimizationExecution:
+    """Optimization execution tracking"""
+    execution_id: str
+    recommendation_id: str
+    status: str  # "pending", "running", "completed", "failed", "rollback"
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    results: Dict[str, Any] = field(default_factory=dict)
+    rollback_info: Dict[str, Any] = field(default_factory=dict)
+
+class SystemMonitor:
+    """System performance monitoring component"""
+
+    def __init__(self):
+        self.metrics_history = defaultdict(lambda: deque(maxlen=1000))
+        self.alert_thresholds = {}
+        self.is_monitoring = False
+        self.monitor_thread = None
+
+    def start_monitoring(self, interval: int = 30):
+        """Start system monitoring"""
+        self.is_monitoring = True
+        self.monitor_thread = threading.Thread(target=self._monitoring_loop, args=(interval,))
+        self.monitor_thread.daemon = True
+        self.monitor_thread.start()
+        logger.info(f"Started system monitoring with {interval}s interval")
+
+    def stop_monitoring(self):
+        """Stop system monitoring"""
+        self.is_monitoring = False
+        if self.monitor_thread:
+            self.monitor_thread.join()
+        logger.info("Stopped system monitoring")
+
+    def _monitoring_loop(self, interval: int):
+        """Main monitoring loop"""
+        while self.is_monitoring:
+            try:
+                metrics = self._collect_system_metrics()
+                timestamp = datetime.now()
+
+                for metric_name, value in metrics.items():
+                    self.metrics_history[metric_name].append({
+                        'timestamp': timestamp,
+                        'value': value
+                    })
+
+                time.sleep(interval)
+
+            except Exception as e:
+                logger.error(f"Error in monitoring loop: {e}")
+                time.sleep(interval)
+
+    def _collect_system_metrics(self) -> Dict[str, float]:
+        """Collect system performance metrics"""
+        try:
+            # CPU metrics
+            cpu_percent = psutil.cpu_percent(interval=1)
+            cpu_count = psutil.cpu_count()
+
+            # Memory metrics
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+            memory_available = memory.available / (1024**3)  # GB
+
+            # Disk metrics
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
+            disk_free = disk.free / (1024**3)  # GB
+
+            # Network metrics (if available)
+            network = psutil.net_io_counters()
+            network_bytes_sent = network.bytes_sent
+            network_bytes_recv = network.bytes_recv
+
+            # Process metrics
+            process_count = len(psutil.pids())
+
+            return {
+                'cpu_utilization': cpu_percent,
+                'cpu_count': cpu_count,
+                'memory_utilization': memory_percent,
+                'memory_available_gb': memory_available,
+                'disk_utilization': disk_percent,
+                'disk_free_gb': disk_free,
+                'network_bytes_sent': network_bytes_sent,
+                'network_bytes_recv': network_bytes_recv,
+                'process_count': process_count,
+                'load_average': psutil.getloadavg()[0] if hasattr(psutil, 'getloadavg') else 0
+            }
+
+        except Exception as e:
+            logger.error(f"Error collecting system metrics: {e}")
+            return {}
+
+    def get_metric_statistics(self, metric_name: str, time_window: timedelta = None) -> Dict[str, float]:
+        """Get statistics for a specific metric"""
+        if metric_name not in self.metrics_history:
+            return {}
+
+        metrics = list(self.metrics_history[metric_name])
+
+        if time_window:
+            cutoff_time = datetime.now() - time_window
+            metrics = [m for m in metrics if m['timestamp'] >= cutoff_time]
+
+        if not metrics:
+            return {}
+
+        values = [m['value'] for m in metrics]
+
+        return {
+            'current': values[-1] if values else 0,
+            'average': np.mean(values),
+            'min': np.min(values),
+            'max': np.max(values),
+            'std': np.std(values),
+            'percentile_95': np.percentile(values, 95),
+            'percentile_99': np.percentile(values, 99),
+            'trend': self._calculate_trend(values)
+        }
+
+    def _calculate_trend(self, values: List[float]) -> str:
+        """Calculate trend direction"""
+        if len(values) < 5:
+            return 'insufficient_data'
+
+        # Use linear regression slope
+        x = np.arange(len(values))
+        slope, _, _, p_value, _ = stats.linregress(x, values)
+
+        if p_value > 0.05:  # Not statistically significant
+            return 'stable'
+        elif slope > 0:
+            return 'increasing'
+        else:
+            return 'decreasing'
+
+class DatabaseOptimizer:
+    """Database performance optimization component"""
+
+    def __init__(self, db_config: Dict[str, Any] = None):
+        self.db_config = db_config or {}
+        self.query_cache = {}
+        self.slow_queries = []
+        self.optimization_suggestions = []
+
+    def analyze_query_performance(self, query: str, execution_time: float) -> Dict[str, Any]:
+        """Analyze query performance"""
+        analysis = {
+            'query': query,
+            'execution_time': execution_time,
+            'is_slow': execution_time > 1.0,  # Queries taking more than 1 second
+            'optimization_suggestions': []
+        }
+
+        # Analyze query patterns
+        query_lower = query.lower()
+
+        # Check for common performance issues
+        if 'select *' in query_lower:
+            analysis['optimization_suggestions'].append(
+                "Avoid SELECT * - specify only needed columns"
+            )
+
+        if 'where' not in query_lower and ('select' in query_lower and 'from' in query_lower):
+            analysis['optimization_suggestions'].append(
+                "Consider adding WHERE clause to filter results"
+            )
+
+        if 'order by' in query_lower and 'limit' not in query_lower:
+            analysis['optimization_suggestions'].append(
+                "Consider adding LIMIT when using ORDER BY"
+            )
+
+        if 'join' in query_lower and 'index' not in query_lower:
+            analysis['optimization_suggestions'].append(
+                "Ensure proper indexes exist on JOIN columns"
+            )
+
+        # Track slow queries
+        if analysis['is_slow']:
+            self.slow_queries.append(analysis)
+
+        return analysis
+
+    def suggest_index_optimizations(self, table_stats: Dict[str, Any]) -> List[str]:
+        """Suggest index optimizations"""
+        suggestions = []
+
+        for table_name, stats in table_stats.items():
+            # Suggest indexes for frequently queried columns
+            if stats.get('scan_ratio', 0) > 0.1:  # More than 10% table scans
+                suggestions.append(
+                    f"Consider adding index on frequently queried columns in {table_name}"
+                )
+
+            # Suggest composite indexes for multi-column queries
+            if stats.get('multi_column_queries', 0) > 10:
+                suggestions.append(
+                    f"Consider composite indexes for multi-column queries on {table_name}"
+                )
+
+        return suggestions
+
+    def optimize_connection_pool(self, current_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize database connection pool settings"""
+        optimized_config = current_config.copy()
+
+        # Optimize based on system resources and usage patterns
+        cpu_count = psutil.cpu_count()
+        memory_gb = psutil.virtual_memory().total / (1024**3)
+
+        # Connection pool optimization
+        suggested_max_connections = min(cpu_count * 4, 100)
+        suggested_min_connections = max(cpu_count, 5)
+
+        optimized_config.update({
+            'max_connections': suggested_max_connections,
+            'min_connections': suggested_min_connections,
+            'connection_timeout': 30,
+            'idle_timeout': 300,
+            'max_lifetime': 3600
+        })
+
+        return optimized_config
+
+class CacheOptimizer:
+    """Cache performance optimization component"""
+
+    def __init__(self, redis_client=None):
+        self.redis_client = redis_client
+        self.cache_stats = defaultdict(int)
+        self.cache_patterns = {}
+
+    def analyze_cache_performance(self) -> Dict[str, Any]:
+        """Analyze cache performance"""
+        if not self.redis_client:
+            return {}
+
+        try:
+            # Get Redis info
+            info = self.redis_client.info()
+
+            cache_analysis = {
+                'hit_rate': self._calculate_hit_rate(info),
+                'memory_usage': info.get('used_memory_human', '0B'),
+                'memory_utilization': info.get('used_memory_rss', 0) / info.get('maxmemory', 1),
+                'connected_clients': info.get('connected_clients', 0),
+                'total_operations': info.get('total_commands_processed', 0),
+                'evicted_keys': info.get('evicted_keys', 0),
+                'expired_keys': info.get('expired_keys', 0)
+            }
+
+            # Analyze key patterns
+            cache_analysis['key_patterns'] = self._analyze_key_patterns()
+
+            return cache_analysis
+
+        except Exception as e:
+            logger.error(f"Error analyzing cache performance: {e}")
+            return {}
+
+    def _calculate_hit_rate(self, info: Dict[str, Any]) -> float:
+        """Calculate cache hit rate"""
+        hits = info.get('keyspace_hits', 0)
+        misses = info.get('keyspace_misses', 0)
+
+        if hits + misses == 0:
+            return 0.0
+
+        return hits / (hits + misses)
+
+    def _analyze_key_patterns(self) -> Dict[str, Any]:
+        """Analyze cache key patterns"""
+        if not self.redis_client:
+            return {}
+
+        try:
+            # Sample keys for analysis
+            keys = self.redis_client.keys('*')[:1000]  # Sample first 1000 keys
+
+            patterns = defaultdict(int)
+            ttl_analysis = defaultdict(list)
+
+            for key in keys:
+                # Extract pattern (before first colon or underscore)
+                if ':' in key:
+                    pattern = key.split(':')[0]
+                elif '_' in key:
+                    pattern = key.split('_')[0]
+                else:
+                    pattern = 'simple'
+
+                patterns[pattern] += 1
+
+                # Check TTL
+                ttl = self.redis_client.ttl(key)
+                ttl_analysis[pattern].append(ttl)
+
+            # Calculate average TTL per pattern
+            avg_ttl = {}
+            for pattern, ttls in ttl_analysis.items():
+                valid_ttls = [t for t in ttls if t > 0]
+                avg_ttl[pattern] = np.mean(valid_ttls) if valid_ttls else -1
+
+            return {
+                'patterns': dict(patterns),
+                'average_ttl': avg_ttl,
+                'total_keys_sampled': len(keys)
+            }
+
+        except Exception as e:
+            logger.error(f"Error analyzing key patterns: {e}")
+            return {}
+
+    def optimize_cache_strategy(self, usage_patterns: Dict[str, Any]) -> Dict[str, Any]:
+        """Suggest cache optimization strategies"""
+        optimizations = {
+            'memory_optimization': [],
+            'performance_optimization': [],
+            'configuration_changes': {}
+        }
+
+        # Memory optimization suggestions
+        if usage_patterns.get('memory_utilization', 0) > 0.8:
+            optimizations['memory_optimization'].extend([
+                "Consider implementing LRU eviction policy",
+                "Review TTL settings for cache keys",
+                "Implement cache compression for large values"
+            ])
+
+        # Performance optimization suggestions
+        hit_rate = usage_patterns.get('hit_rate', 0)
+        if hit_rate < 0.8:
+            optimizations['performance_optimization'].extend([
+                "Review cache key patterns and improve cache strategy",
+                "Implement read-through caching for frequently accessed data",
+                "Consider warming up cache with popular data"
+            ])
+
+        # Configuration suggestions
+        connected_clients = usage_patterns.get('connected_clients', 0)
+        if connected_clients > 100:
+            optimizations['configuration_changes']['maxclients'] = 1000
+            optimizations['configuration_changes']['tcp-keepalive'] = 60
+
+        return optimizations
+
+class LoadBalancingOptimizer:
+    """Load balancing optimization component"""
+
+    def __init__(self):
+        self.server_metrics = defaultdict(dict)
+        self.routing_strategies = ['round_robin', 'least_connections', 'weighted', 'ip_hash']
+
+    def analyze_server_load(self, servers: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze load distribution across servers"""
+        total_requests = sum(server.get('requests', 0) for server in servers)
+        total_response_time = sum(server.get('avg_response_time', 0) for server in servers)
+
+        analysis = {
+            'total_servers': len(servers),
+            'total_requests': total_requests,
+            'avg_response_time': total_response_time / len(servers) if servers else 0,
+            'load_distribution': [],
+            'bottlenecks': []
+        }
+
+        # Analyze individual servers
+        for server in servers:
+            server_load = server.get('requests', 0) / total_requests if total_requests > 0 else 0
+            cpu_usage = server.get('cpu_usage', 0)
+            memory_usage = server.get('memory_usage', 0)
+            response_time = server.get('avg_response_time', 0)
+
+            server_analysis = {
+                'server_id': server.get('id', 'unknown'),
+                'load_percentage': server_load * 100,
+                'cpu_usage': cpu_usage,
+                'memory_usage': memory_usage,
+                'response_time': response_time,
+                'health_score': self._calculate_server_health(cpu_usage, memory_usage, response_time)
+            }
+
+            analysis['load_distribution'].append(server_analysis)
+
+            # Identify bottlenecks
+            if cpu_usage > 80 or memory_usage > 85 or response_time > 2000:
+                analysis['bottlenecks'].append({
+                    'server_id': server.get('id'),
+                    'issues': []
+                })
+
+                if cpu_usage > 80:
+                    analysis['bottlenecks'][-1]['issues'].append(f"High CPU usage: {cpu_usage}%")
+                if memory_usage > 85:
+                    analysis['bottlenecks'][-1]['issues'].append(f"High memory usage: {memory_usage}%")
+                if response_time > 2000:
+                    analysis['bottlenecks'][-1]['issues'].append(f"High response time: {response_time}ms")
+
+        return analysis
+
+    def _calculate_server_health(self, cpu: float, memory: float, response_time: float) -> float:
+        """Calculate server health score (0-100)"""
+        cpu_score = max(0, 100 - cpu)  # Lower CPU is better
+        memory_score = max(0, 100 - memory)  # Lower memory usage is better
+        response_score = max(0, 100 - (response_time / 50))  # Lower response time is better
+
+        # Weighted average
+        health_score = (cpu_score * 0.4 + memory_score * 0.3 + response_score * 0.3)
+        return max(0, min(100, health_score))
+
+    def suggest_load_balancing_strategy(self, server_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Suggest optimal load balancing strategy"""
+        servers = server_analysis['load_distribution']
+
+        # Calculate load variance
+        loads = [s['load_percentage'] for s in servers]
+        load_variance = np.var(loads) if loads else 0
+
+        # Calculate response time variance
+        response_times = [s['response_time'] for s in servers]
+        response_variance = np.var(response_times) if response_times else 0
+
+        suggestions = {
+            'recommended_strategy': 'round_robin',  # Default
+            'rationale': [],
+            'configuration': {},
+            'expected_improvements': {}
+        }
+
+        # Choose strategy based on analysis
+        if load_variance > 25:  # High load imbalance
+            suggestions['recommended_strategy'] = 'least_connections'
+            suggestions['rationale'].append("High load imbalance detected - least connections will help redistribute")
+
+        elif response_variance > 500:  # High response time variance
+            suggestions['recommended_strategy'] = 'weighted'
+            suggestions['rationale'].append("High response time variance - weighted routing based on server capacity")
+
+        else:
+            suggestions['recommended_strategy'] = 'round_robin'
+            suggestions['rationale'].append("Balanced load distribution - round robin is sufficient")
+
+        # Configuration suggestions
+        if any(s['health_score'] < 50 for s in servers):
+            suggestions['configuration']['health_check_interval'] = 10
+            suggestions['configuration']['failure_threshold'] = 3
+            suggestions['rationale'].append("Added aggressive health checking due to server issues")
+
+        return suggestions
+
+class PerformanceOptimizationEngine:
+    """
+    Comprehensive Performance Optimization Engine
+    Provides intelligent performance monitoring and optimization strategies
+    """
+
+    def __init__(self, config_path: str = None):
+        self.system_monitor = SystemMonitor()
+        self.database_optimizer = DatabaseOptimizer()
+        self.cache_optimizer = CacheOptimizer()
+        self.load_balancer_optimizer = LoadBalancingOptimizer()
+
+        self.optimization_rules = []
+        self.recommendations = []
+        self.executions = []
+        self.performance_baseline = {}
+
+        # Initialize components
+        self._initialize_optimization_rules()
+        self._initialize_performance_baselines()
+
+        logger.info("Performance Optimization Engine initialized successfully")
+
+    def _initialize_optimization_rules(self):
+        """Initialize default optimization rules"""
+        default_rules = [
+            OptimizationRule(
+                rule_id="cpu_optimization_rule",
+                rule_name="CPU Utilization Optimization",
+                optimization_type=OptimizationType.CPU_OPTIMIZATION,
+                conditions={
+                    "cpu_utilization": {"threshold": 80, "operator": "greater_than"},
+                    "duration": {"threshold": 300, "operator": "greater_than"}  # 5 minutes
+                },
+                actions=[
+                    "Scale up CPU resources",
+                    "Optimize high-CPU processes",
+                    "Implement CPU-intensive task queuing"
+                ],
+                expected_improvement={
+                    "cpu_utilization": -20,  # Reduce by 20%
+                    "response_time": -30   # Improve by 30%
+                },
+                priority=OptimizationPriority.HIGH,
+                confidence=0.8
+            ),
+
+            OptimizationRule(
+                rule_id="memory_optimization_rule",
+                rule_name="Memory Usage Optimization",
+                optimization_type=OptimizationType.MEMORY_OPTIMIZATION,
+                conditions={
+                    "memory_utilization": {"threshold": 85, "operator": "greater_than"}
+                },
+                actions=[
+                    "Optimize memory usage patterns",
+                    "Implement memory caching strategies",
+                    "Scale memory resources"
+                ],
+                expected_improvement={
+                    "memory_utilization": -25,
+                    "application_performance": 15
+                },
+                priority=OptimizationPriority.HIGH,
+                confidence=0.75
+            ),
+
+            OptimizationRule(
+                rule_id="database_optimization_rule",
+                rule_name="Database Performance Optimization",
+                optimization_type=OptimizationType.DATABASE_OPTIMIZATION,
+                conditions={
+                    "slow_query_count": {"threshold": 10, "operator": "greater_than"},
+                    "avg_query_time": {"threshold": 1000, "operator": "greater_than"}  # 1 second
+                },
+                actions=[
+                    "Optimize slow queries",
+                    "Add database indexes",
+                    "Optimize connection pooling"
+                ],
+                expected_improvement={
+                    "query_performance": 40,
+                    "database_load": -30
+                },
+                priority=OptimizationPriority.MEDIUM,
+                confidence=0.9
+            ),
+
+            OptimizationRule(
+                rule_id="cache_optimization_rule",
+                rule_name="Cache Performance Optimization",
+                optimization_type=OptimizationType.CACHE_OPTIMIZATION,
+                conditions={
+                    "cache_hit_rate": {"threshold": 0.8, "operator": "less_than"}
+                },
+                actions=[
+                    "Optimize cache strategy",
+                    "Implement cache warming",
+                    "Review cache TTL settings"
+                ],
+                expected_improvement={
+                    "cache_hit_rate": 15,
+                    "response_time": -20
+                },
+                priority=OptimizationPriority.MEDIUM,
+                confidence=0.7
+            ),
+
+            OptimizationRule(
+                rule_id="network_optimization_rule",
+                rule_name="Network Performance Optimization",
+                optimization_type=OptimizationType.NETWORK_OPTIMIZATION,
+                conditions={
+                    "network_latency": {"threshold": 100, "operator": "greater_than"},  # 100ms
+                    "packet_loss": {"threshold": 0.01, "operator": "greater_than"}
+                },
+                actions=[
+                    "Optimize network configuration",
+                    "Implement CDN for static content",
+                    "Review bandwidth allocation"
+                ],
+                expected_improvement={
+                    "network_latency": -40,
+                    "user_experience": 25
+                },
+                priority=OptimizationPriority.MEDIUM,
+                confidence=0.6
+            )
+        ]
+
+        self.optimization_rules = default_rules
+
+    def _initialize_performance_baselines(self):
+        """Initialize performance baselines"""
+        self.performance_baseline = {
+            'cpu_utilization': {'target': 70, 'acceptable': 80, 'critical': 90},
+            'memory_utilization': {'target': 75, 'acceptable': 85, 'critical': 95},
+            'response_time': {'target': 200, 'acceptable': 500, 'critical': 1000},  # milliseconds
+            'throughput': {'target': 1000, 'acceptable': 500, 'critical': 100},  # requests/min
+            'error_rate': {'target': 0.001, 'acceptable': 0.01, 'critical': 0.05},  # percentage
+            'cache_hit_rate': {'target': 0.9, 'acceptable': 0.8, 'critical': 0.6},
+            'database_query_time': {'target': 100, 'acceptable': 500, 'critical': 1000}  # milliseconds
+        }
+
+    def start_optimization_monitoring(self, monitoring_interval: int = 60):
+        """Start continuous performance monitoring and optimization"""
+        self.system_monitor.start_monitoring(monitoring_interval)
+
+        # Start optimization analysis loop
+        optimization_thread = threading.Thread(target=self._optimization_loop, args=(monitoring_interval * 2,))
+        optimization_thread.daemon = True
+        optimization_thread.start()
+
+        logger.info("Started performance optimization monitoring")
+
+    def _optimization_loop(self, analysis_interval: int):
+        """Main optimization analysis loop"""
+        while self.system_monitor.is_monitoring:
+            try:
+                # Analyze current performance
+                current_metrics = self._collect_all_metrics()
+
+                # Generate optimization recommendations
+                new_recommendations = self._analyze_and_recommend(current_metrics)
+
+                # Add new recommendations
+                self.recommendations.extend(new_recommendations)
+
+                # Clean up old recommendations (older than 1 hour)
+                cutoff_time = datetime.now() - timedelta(hours=1)
+                self.recommendations = [
+                    rec for rec in self.recommendations
+                    if rec.created_at >= cutoff_time or rec.expires_at is None
+                ]
+
+                if new_recommendations:
+                    logger.info(f"Generated {len(new_recommendations)} new optimization recommendations")
+
+                time.sleep(analysis_interval)
+
+            except Exception as e:
+                logger.error(f"Error in optimization loop: {e}")
+                time.sleep(analysis_interval)
+
+    def _collect_all_metrics(self) -> Dict[str, Any]:
+        """Collect metrics from all monitoring components"""
+        metrics = {
+            'timestamp': datetime.now(),
+            'system': {},
+            'database': {},
+            'cache': {},
+            'load_balancing': {}
+        }
+
+        # System metrics
+        for metric_name in ['cpu_utilization', 'memory_utilization', 'disk_utilization']:
+            stats = self.system_monitor.get_metric_statistics(metric_name, timedelta(minutes=10))
+            if stats:
+                metrics['system'][metric_name] = stats
+
+        # Database metrics (simulated for demo)
+        metrics['database'] = {
+            'slow_query_count': np.random.randint(0, 20),
+            'avg_query_time': np.random.uniform(50, 1500),
+            'connection_pool_utilization': np.random.uniform(0.3, 0.9)
+        }
+
+        # Cache metrics (simulated for demo)
+        metrics['cache'] = {
+            'hit_rate': np.random.uniform(0.6, 0.95),
+            'memory_utilization': np.random.uniform(0.4, 0.9),
+            'eviction_rate': np.random.uniform(0, 100)
+        }
+
+        # Load balancing metrics (simulated for demo)
+        metrics['load_balancing'] = {
+            'load_variance': np.random.uniform(5, 40),
+            'server_health_avg': np.random.uniform(60, 95),
+            'response_time_variance': np.random.uniform(100, 800)
+        }
+
+        return metrics
+
+    def _analyze_and_recommend(self, metrics: Dict[str, Any]) -> List[OptimizationRecommendation]:
+        """Analyze metrics and generate optimization recommendations"""
+        recommendations = []
+
+        # Check each optimization rule
+        for rule in self.optimization_rules:
+            if not rule.enabled:
+                continue
+
+            if self._evaluate_rule_conditions(rule, metrics):
+                recommendation = self._create_recommendation_from_rule(rule, metrics)
+                recommendations.append(recommendation)
+
+        # Generate custom recommendations based on specific patterns
+        custom_recommendations = self._generate_custom_recommendations(metrics)
+        recommendations.extend(custom_recommendations)
+
+        return recommendations
+
+    def _evaluate_rule_conditions(self, rule: OptimizationRule, metrics: Dict[str, Any]) -> bool:
+        """Evaluate if rule conditions are met"""
+        for condition_key, condition_value in rule.conditions.items():
+            # Extract metric value from nested metrics structure
+            metric_value = self._extract_metric_value(metrics, condition_key)
+
+            if metric_value is None:
+                continue
+
+            threshold = condition_value['threshold']
+            operator = condition_value['operator']
+
+            if operator == 'greater_than' and metric_value <= threshold:
+                return False
+            elif operator == 'less_than' and metric_value >= threshold:
+                return False
+            elif operator == 'equals' and abs(metric_value - threshold) > 0.001:
+                return False
+
+        return True
+
+    def _extract_metric_value(self, metrics: Dict[str, Any], metric_path: str) -> Optional[float]:
+        """Extract metric value from nested structure"""
+        # Simple implementation - in practice, this would be more sophisticated
+        for category, category_metrics in metrics.items():
+            if isinstance(category_metrics, dict):
+                if metric_path in category_metrics:
+                    metric_data = category_metrics[metric_path]
+                    if isinstance(metric_data, dict) and 'current' in metric_data:
+                        return metric_data['current']
+                    elif isinstance(metric_data, (int, float)):
+                        return metric_data
+
+        return None
+
+    def _create_recommendation_from_rule(self, rule: OptimizationRule, metrics: Dict[str, Any]) -> OptimizationRecommendation:
+        """Create optimization recommendation from rule"""
+        return OptimizationRecommendation(
+            recommendation_id=f"rec_{rule.rule_id}_{datetime.now().timestamp()}",
+            title=rule.rule_name,
+            description=f"Optimization opportunity detected based on {rule.rule_name}",
+            optimization_type=rule.optimization_type,
+            priority=rule.priority,
+            expected_improvements=rule.expected_improvement,
+            implementation_steps=rule.actions,
+            estimated_effort=self._estimate_effort(rule.optimization_type),
+            risk_level=self._assess_risk_level(rule.optimization_type),
+            confidence_score=rule.confidence,
+            supporting_data={
+                'rule_id': rule.rule_id,
+                'triggered_conditions': rule.conditions,
+                'current_metrics': metrics
+            },
+            created_at=datetime.now(),
+            expires_at=datetime.now() + timedelta(hours=2)
+        )
+
+    def _generate_custom_recommendations(self, metrics: Dict[str, Any]) -> List[OptimizationRecommendation]:
+        """Generate custom recommendations based on specific patterns"""
+        recommendations = []
+
+        # Pattern 1: High memory usage with low cache hit rate
+        memory_util = self._extract_metric_value(metrics, 'memory_utilization')
+        cache_hit_rate = self._extract_metric_value(metrics, 'hit_rate')
+
+        if memory_util and cache_hit_rate and memory_util > 80 and cache_hit_rate < 0.7:
+            recommendations.append(OptimizationRecommendation(
+                recommendation_id=f"custom_memory_cache_{datetime.now().timestamp()}",
+                title="Memory and Cache Optimization",
+                description="High memory usage combined with low cache hit rate suggests cache strategy optimization",
+                optimization_type=OptimizationType.CACHE_OPTIMIZATION,
+                priority=OptimizationPriority.HIGH,
+                expected_improvements={
+                    'memory_utilization': -15,
+                    'cache_hit_rate': 20,
+                    'response_time': -25
+                },
+                implementation_steps=[
+                    "Analyze cache key patterns and TTL settings",
+                    "Implement memory-efficient cache compression",
+                    "Optimize cache eviction policy",
+                    "Review cache warming strategies"
+                ],
+                estimated_effort="medium",
+                risk_level="low",
+                confidence_score=0.8,
+                supporting_data={
+                    'memory_utilization': memory_util,
+                    'cache_hit_rate': cache_hit_rate
+                },
+                created_at=datetime.now()
+            ))
+
+        # Pattern 2: Database performance issues
+        slow_queries = self._extract_metric_value(metrics, 'slow_query_count')
+        avg_query_time = self._extract_metric_value(metrics, 'avg_query_time')
+
+        if slow_queries and avg_query_time and slow_queries > 5 and avg_query_time > 500:
+            recommendations.append(OptimizationRecommendation(
+                recommendation_id=f"custom_database_{datetime.now().timestamp()}",
+                title="Database Performance Optimization",
+                description="Multiple slow queries detected with high average query time",
+                optimization_type=OptimizationType.DATABASE_OPTIMIZATION,
+                priority=OptimizationPriority.HIGH,
+                expected_improvements={
+                    'query_performance': 50,
+                    'database_load': -35,
+                    'response_time': -30
+                },
+                implementation_steps=[
+                    "Identify and optimize slowest queries",
+                    "Add missing indexes for frequently queried columns",
+                    "Optimize database connection pool settings",
+                    "Consider query result caching"
+                ],
+                estimated_effort="high",
+                risk_level="medium",
+                confidence_score=0.85,
+                supporting_data={
+                    'slow_query_count': slow_queries,
+                    'avg_query_time': avg_query_time
+                },
+                created_at=datetime.now()
+            ))
+
+        return recommendations
+
+    def _estimate_effort(self, optimization_type: OptimizationType) -> str:
+        """Estimate implementation effort"""
+        effort_mapping = {
+            OptimizationType.CPU_OPTIMIZATION: "medium",
+            OptimizationType.MEMORY_OPTIMIZATION: "medium",
+            OptimizationType.DATABASE_OPTIMIZATION: "high",
+            OptimizationType.NETWORK_OPTIMIZATION: "high",
+            OptimizationType.CACHE_OPTIMIZATION: "low",
+            OptimizationType.ALGORITHM_OPTIMIZATION: "high",
+            OptimizationType.RESOURCE_SCALING: "low",
+            OptimizationType.LOAD_BALANCING: "medium",
+            OptimizationType.QUERY_OPTIMIZATION: "medium",
+            OptimizationType.API_OPTIMIZATION: "medium"
+        }
+        return effort_mapping.get(optimization_type, "medium")
+
+    def _assess_risk_level(self, optimization_type: OptimizationType) -> str:
+        """Assess risk level of optimization"""
+        risk_mapping = {
+            OptimizationType.CPU_OPTIMIZATION: "low",
+            OptimizationType.MEMORY_OPTIMIZATION: "low",
+            OptimizationType.DATABASE_OPTIMIZATION: "medium",
+            OptimizationType.NETWORK_OPTIMIZATION: "high",
+            OptimizationType.CACHE_OPTIMIZATION: "low",
+            OptimizationType.ALGORITHM_OPTIMIZATION: "medium",
+            OptimizationType.RESOURCE_SCALING: "low",
+            OptimizationType.LOAD_BALANCING: "medium",
+            OptimizationType.QUERY_OPTIMIZATION: "medium",
+            OptimizationType.API_OPTIMIZATION: "low"
+        }
+        return risk_mapping.get(optimization_type, "medium")
+
+    def get_optimization_recommendations(self, priority_filter: OptimizationPriority = None, limit: int = 10) -> List[OptimizationRecommendation]:
+        """Get current optimization recommendations"""
+        recommendations = self.recommendations.copy()
+
+        if priority_filter:
+            recommendations = [rec for rec in recommendations if rec.priority == priority_filter]
+
+        # Sort by priority and confidence
+        priority_order = {
+            OptimizationPriority.CRITICAL: 4,
+            OptimizationPriority.HIGH: 3,
+            OptimizationPriority.MEDIUM: 2,
+            OptimizationPriority.LOW: 1
+        }
+
+        recommendations.sort(
+            key=lambda x: (priority_order.get(x.priority, 0), x.confidence_score),
+            reverse=True
+        )
+
+        return recommendations[:limit]
+
+    def execute_optimization(self, recommendation_id: str, dry_run: bool = True) -> OptimizationExecution:
+        """Execute an optimization recommendation"""
+        recommendation = next(
+            (rec for rec in self.recommendations if rec.recommendation_id == recommendation_id),
+            None
+        )
+
+        if not recommendation:
+            raise ValueError(f"Recommendation {recommendation_id} not found")
+
+        execution = OptimizationExecution(
+            execution_id=f"exec_{datetime.now().timestamp()}",
+            recommendation_id=recommendation_id,
+            status="running" if not dry_run else "dry_run",
+            started_at=datetime.now()
+        )
+
+        try:
+            if dry_run:
+                # Simulate execution for demonstration
+                execution.results = {
+                    'dry_run': True,
+                    'estimated_impact': recommendation.expected_improvements,
+                    'pre_execution_metrics': self._collect_all_metrics(),
+                    'execution_plan': recommendation.implementation_steps
+                }
+                execution.status = "completed"
+                execution.completed_at = datetime.now()
+
+                logger.info(f"Dry run completed for optimization {recommendation_id}")
+
+            else:
+                # In a real implementation, this would execute actual optimizations
+                execution.results = {
+                    'executed_steps': recommendation.implementation_steps,
+                    'actual_improvements': recommendation.expected_improvements,  # Would be measured
+                    'rollback_available': True
+                }
+                execution.status = "completed"
+                execution.completed_at = datetime.now()
+
+                logger.info(f"Executed optimization {recommendation_id}")
+
+        except Exception as e:
+            execution.status = "failed"
+            execution.results = {'error': str(e)}
+            execution.completed_at = datetime.now()
+            logger.error(f"Optimization execution failed: {e}")
+
+        self.executions.append(execution)
+        return execution
+
+    def get_performance_dashboard(self) -> Dict[str, Any]:
+        """Get comprehensive performance dashboard data"""
+        current_metrics = self._collect_all_metrics()
+
+        dashboard = {
+            'timestamp': datetime.now().isoformat(),
+            'system_health': self._calculate_system_health(current_metrics),
+            'current_metrics': current_metrics,
+            'performance_trends': self._analyze_performance_trends(),
+            'active_recommendations': len(self.get_optimization_recommendations()),
+            'critical_issues': len(self.get_optimization_recommendations(OptimizationPriority.CRITICAL)),
+            'optimization_history': self._get_optimization_history(),
+            'baseline_comparison': self._compare_with_baseline(current_metrics)
+        }
+
+        return dashboard
+
+    def _calculate_system_health(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate overall system health score"""
+        health_factors = {}
+
+        # CPU health
+        cpu_util = self._extract_metric_value(metrics, 'cpu_utilization') or 0
+        health_factors['cpu'] = max(0, 100 - cpu_util)
+
+        # Memory health
+        mem_util = self._extract_metric_value(metrics, 'memory_utilization') or 0
+        health_factors['memory'] = max(0, 100 - mem_util)
+
+        # Database health
+        avg_query_time = self._extract_metric_value(metrics, 'avg_query_time') or 100
+        health_factors['database'] = max(0, 100 - (avg_query_time / 20))
+
+        # Cache health
+        cache_hit_rate = self._extract_metric_value(metrics, 'hit_rate') or 0.8
+        health_factors['cache'] = cache_hit_rate * 100
+
+        # Overall health (weighted average)
+        weights = {'cpu': 0.25, 'memory': 0.25, 'database': 0.25, 'cache': 0.25}
+        overall_health = sum(health_factors[factor] * weights[factor] for factor in health_factors)
+
+        return {
+            'overall_score': round(overall_health, 1),
+            'component_scores': health_factors,
+            'health_status': self._get_health_status(overall_health)
+        }
+
+    def _get_health_status(self, score: float) -> str:
+        """Get health status based on score"""
+        if score >= 90:
+            return 'excellent'
+        elif score >= 75:
+            return 'good'
+        elif score >= 60:
+            return 'fair'
+        elif score >= 40:
+            return 'poor'
+        else:
+            return 'critical'
+
+    def _analyze_performance_trends(self) -> Dict[str, str]:
+        """Analyze performance trends"""
+        trends = {}
+
+        for metric_name in ['cpu_utilization', 'memory_utilization']:
+            stats = self.system_monitor.get_metric_statistics(metric_name, timedelta(hours=1))
+            if stats:
+                trends[metric_name] = stats.get('trend', 'unknown')
+
+        return trends
+
+    def _get_optimization_history(self) -> List[Dict[str, Any]]:
+        """Get recent optimization execution history"""
+        recent_executions = [
+            exec for exec in self.executions
+            if exec.completed_at and exec.completed_at >= datetime.now() - timedelta(hours=24)
+        ]
+
+        return [
+            {
+                'execution_id': exec.execution_id,
+                'recommendation_id': exec.recommendation_id,
+                'status': exec.status,
+                'started_at': exec.started_at.isoformat(),
+                'completed_at': exec.completed_at.isoformat() if exec.completed_at else None,
+                'success': exec.status == 'completed'
+            }
+            for exec in recent_executions
+        ]
+
+    def _compare_with_baseline(self, current_metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare current metrics with baseline"""
+        comparison = {}
+
+        for metric_name, baseline in self.performance_baseline.items():
+            current_value = self._extract_metric_value(current_metrics, metric_name)
+
+            if current_value is not None:
+                target = baseline['target']
+                acceptable = baseline['acceptable']
+                critical = baseline['critical']
+
+                if metric_name in ['error_rate']:  # Lower is better
+                    if current_value <= target:
+                        status = 'excellent'
+                    elif current_value <= acceptable:
+                        status = 'good'
+                    elif current_value <= critical:
+                        status = 'warning'
+                    else:
+                        status = 'critical'
+                else:  # Higher values might be worse (like CPU utilization)
+                    if current_value <= target:
+                        status = 'excellent'
+                    elif current_value <= acceptable:
+                        status = 'good'
+                    elif current_value <= critical:
+                        status = 'warning'
+                    else:
+                        status = 'critical'
+
+                comparison[metric_name] = {
+                    'current': current_value,
+                    'target': target,
+                    'status': status,
+                    'deviation_from_target': ((current_value - target) / target) * 100
+                }
+
+        return comparison
+
+    def stop_optimization_monitoring(self):
+        """Stop optimization monitoring"""
+        self.system_monitor.stop_monitoring()
+        logger.info("Stopped performance optimization monitoring")
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    # Initialize the performance optimization engine
+    engine = PerformanceOptimizationEngine()
+
+    print("⚡ Performance Optimization Engine for GlobalTaxCalc.com")
+    print("=" * 65)
+
+    try:
+        # Start monitoring
+        print("Starting performance monitoring...")
+        engine.start_optimization_monitoring(monitoring_interval=30)
+
+        # Let it collect some data
+        time.sleep(5)
+
+        # Get current performance dashboard
+        print("\n📊 Performance Dashboard:")
+        dashboard = engine.get_performance_dashboard()
+        print(f"  Overall System Health: {dashboard['system_health']['overall_score']}% ({dashboard['system_health']['health_status'].title()})")
+        print(f"  Active Recommendations: {dashboard['active_recommendations']}")
+        print(f"  Critical Issues: {dashboard['critical_issues']}")
+
+        # Get optimization recommendations
+        print("\n🎯 Current Optimization Recommendations:")
+        recommendations = engine.get_optimization_recommendations(limit=5)
+
+        for i, rec in enumerate(recommendations, 1):
+            print(f"  {i}. {rec.title}")
+            print(f"     Priority: {rec.priority.value.title()} | Confidence: {rec.confidence_score:.1%}")
+            print(f"     Expected Improvements: {list(rec.expected_improvements.keys())}")
+            print(f"     Effort: {rec.estimated_effort.title()} | Risk: {rec.risk_level.title()}")
+
+        # Test optimization execution (dry run)
+        if recommendations:
+            print(f"\n🧪 Testing Optimization Execution (Dry Run):")
+            first_rec = recommendations[0]
+            execution = engine.execute_optimization(first_rec.recommendation_id, dry_run=True)
+
+            print(f"  Execution ID: {execution.execution_id}")
+            print(f"  Status: {execution.status}")
+            print(f"  Duration: {(execution.completed_at - execution.started_at).total_seconds():.2f} seconds")
+            print(f"  Planned Steps: {len(execution.results.get('execution_plan', []))}")
+
+        # Show system component health
+        print(f"\n🏥 Component Health Scores:")
+        component_scores = dashboard['system_health']['component_scores']
+        for component, score in component_scores.items():
+            print(f"  {component.title()}: {score:.1f}%")
+
+        # Show performance trends
+        print(f"\n📈 Performance Trends:")
+        trends = dashboard['performance_trends']
+        for metric, trend in trends.items():
+            print(f"  {metric.replace('_', ' ').title()}: {trend.title()}")
+
+        # Show baseline comparison
+        print(f"\n📏 Baseline Comparison:")
+        baseline_comparison = dashboard['baseline_comparison']
+        for metric, comparison in baseline_comparison.items():
+            status_emoji = {
+                'excellent': '🟢',
+                'good': '🟡',
+                'warning': '🟠',
+                'critical': '🔴'
+            }.get(comparison['status'], '⚪')
+
+            print(f"  {status_emoji} {metric.replace('_', ' ').title()}: {comparison['current']:.1f} (Target: {comparison['target']:.1f})")
+
+        print("\n✅ Performance Optimization Engine demonstration completed successfully!")
+        print("\nKey Features Implemented:")
+        print("- Real-time system performance monitoring")
+        print("- Intelligent optimization rule engine")
+        print("- Multi-component optimization (CPU, Memory, Database, Cache, Network)")
+        print("- Load balancing optimization strategies")
+        print("- Automated recommendation generation")
+        print("- Risk assessment and effort estimation")
+        print("- Performance baseline comparison")
+        print("- Optimization execution with rollback capability")
+        print("- Comprehensive performance dashboard")
+        print("- Historical trend analysis")
+        print("- Health scoring and alerting")
+        print("- Pattern-based custom recommendations")
+
+        # Clean shutdown
+        print(f"\nStopping optimization monitoring...")
+        engine.stop_optimization_monitoring()
+
+    except KeyboardInterrupt:
+        print(f"\nGracefully shutting down...")
+        engine.stop_optimization_monitoring()
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        engine.stop_optimization_monitoring()

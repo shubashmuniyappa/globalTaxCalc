@@ -1,0 +1,717 @@
+/**
+ * Mobile-Specific Optimizations CSS
+ *
+ * Comprehensive mobile styles for GlobalTaxCalc PWA including
+ * touch optimizations, platform-specific styles, and performance enhancements.
+ */
+
+/* Viewport and Display Optimizations */
+:root {
+  --vh: 1vh;
+  --app-height: 100vh;
+  --safe-area-inset-top: 0px;
+  --safe-area-inset-right: 0px;
+  --safe-area-inset-bottom: 0px;
+  --safe-area-inset-left: 0px;
+  --touch-target-size: 44px;
+}
+
+/* Dynamic viewport height for mobile browsers */
+.mobile-viewport {
+  height: calc(var(--vh, 1vh) * 100);
+  min-height: -webkit-fill-available;
+}
+
+/* Standalone mode optimizations */
+.standalone-mode {
+  height: var(--app-height);
+  overflow: hidden;
+}
+
+.standalone-mode .app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Safe area handling for iOS */
+.safe-area-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.safe-area-sides {
+  padding-left: var(--safe-area-inset-left);
+  padding-right: var(--safe-area-inset-right);
+}
+
+.full-safe-area {
+  padding-top: var(--safe-area-inset-top);
+  padding-right: var(--safe-area-inset-right);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
+}
+
+/* Touch Target Optimizations */
+button, a, input, select, textarea, [role="button"], [role="link"] {
+  min-height: var(--touch-target-size);
+  min-width: var(--touch-target-size);
+  touch-action: manipulation;
+  position: relative;
+}
+
+/* Enhanced touch targets for small elements */
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: var(--touch-target-size);
+  min-height: var(--touch-target-size);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.small-button {
+  position: relative;
+}
+
+.small-button::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  pointer-events: all;
+}
+
+/* Calculator-specific touch optimizations */
+.calculator-button {
+  min-height: 48px;
+  min-width: 48px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.calculator-button:active {
+  transform: scale(0.95);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Touch feedback styles */
+.touch-feedback {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-feedback::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+  pointer-events: none;
+}
+
+.touch-feedback:active::after {
+  width: 100px;
+  height: 100px;
+}
+
+/* Scroll Optimizations */
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* iOS momentum scrolling */
+.platform-ios .scrollable {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Android overscroll behavior */
+.platform-android {
+  overscroll-behavior: contain;
+}
+
+/* Pull-to-refresh styles */
+.pull-to-refresh {
+  position: relative;
+  overflow: hidden;
+}
+
+.pull-to-refresh.can-refresh {
+  background: linear-gradient(to bottom, #f0f9ff, transparent);
+}
+
+.pull-to-refresh.refreshing {
+  background: linear-gradient(to bottom, #dbeafe, transparent);
+}
+
+.pull-to-refresh::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid #3b82f6;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.pull-to-refresh.refreshing::before {
+  opacity: 1;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* Orientation Handling */
+.landscape {
+  /* Landscape-specific styles */
+}
+
+.landscape .bottom-navigation {
+  display: none;
+}
+
+.landscape .calculator-interface {
+  flex-direction: row;
+}
+
+.landscape .calculator-display {
+  width: 40%;
+}
+
+.landscape .calculator-buttons {
+  width: 60%;
+}
+
+.portrait {
+  /* Portrait-specific styles */
+}
+
+.landscape-optimized {
+  /* Additional landscape optimizations */
+}
+
+.landscape-optimized .sidebar {
+  position: static;
+  width: 300px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.landscape-optimized .main-content {
+  margin-left: 0;
+}
+
+/* Keyboard Handling */
+.keyboard-open {
+  /* Styles when virtual keyboard is open */
+}
+
+.keyboard-open .bottom-navigation {
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.keyboard-open .calculator-interface {
+  padding-bottom: 0;
+}
+
+.keyboard-open .footer {
+  display: none;
+}
+
+/* Platform-Specific Styles */
+
+/* iOS Platform */
+.platform-ios {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.platform-ios .calculator-button {
+  border-radius: 12px;
+  font-weight: 400;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.platform-ios .modal {
+  border-radius: 16px 16px 0 0;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.platform-ios .card {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.platform-ios .bottom-navigation {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.platform-ios .ios-install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  z-index: 10000;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.platform-ios .install-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.platform-ios .install-instructions {
+  font-size: 12px;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.platform-ios .install-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Android Platform */
+.platform-android {
+  font-family: 'Roboto', sans-serif;
+}
+
+.platform-android .calculator-button {
+  border-radius: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.platform-android .fab {
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s ease;
+}
+
+.platform-android .fab:hover {
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.platform-android .modal {
+  border-radius: 8px 8px 0 0;
+}
+
+.platform-android .card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.platform-android .ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.platform-android .ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.platform-android .ripple:active::before {
+  width: 200px;
+  height: 200px;
+}
+
+/* Performance Optimizations */
+.reduced-animations * {
+  animation-duration: 0.1s !important;
+  transition-duration: 0.1s !important;
+}
+
+.low-performance .calculator-button {
+  transition: none !important;
+}
+
+.low-performance .fade-in,
+.low-performance .slide-in {
+  animation: none !important;
+}
+
+/* Network-aware optimizations */
+.slow-connection img {
+  filter: contrast(0.9) brightness(0.9);
+}
+
+.slow-connection * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.fast-connection.enhanced-quality {
+  /* Enhanced visuals for fast connections */
+}
+
+.fast-connection.enhanced-quality .calculator-button {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Long press feedback */
+.long-pressed {
+  transform: scale(0.98);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Accessibility Optimizations */
+.has-touch button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.keyboard-navigation button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.keyboard-navigation *:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .calculator-button {
+    border: 2px solid #000;
+  }
+
+  .platform-ios .calculator-button,
+  .platform-android .calculator-button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #fff;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01s !important;
+  }
+
+  .calculator-button:active {
+    transform: none;
+  }
+
+  .touch-feedback::after {
+    display: none;
+  }
+}
+
+/* Device-specific optimizations */
+@media (max-width: 320px) {
+  /* Small devices (iPhone SE, etc.) */
+  :root {
+    --touch-target-size: 40px;
+  }
+
+  .calculator-button {
+    min-height: 40px;
+    min-width: 40px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile devices */
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  /* Calculator optimizations for mobile */
+  .calculator-interface {
+    padding: 8px;
+  }
+
+  .calculator-display {
+    font-size: 24px;
+    padding: 16px;
+  }
+
+  .calculator-buttons {
+    gap: 8px;
+  }
+
+  .calculator-button {
+    font-size: 18px;
+    border-radius: 8px;
+  }
+
+  /* Form optimizations */
+  input[type="number"],
+  input[type="text"],
+  select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  /* Navigation optimizations */
+  .bottom-navigation {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .top-navigation {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@media (min-width: 769px) {
+  /* Desktop and tablet */
+  .mobile-only {
+    display: none;
+  }
+
+  .desktop-only {
+    display: block;
+  }
+
+  .desktop-optimized .calculator-interface {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch devices */
+  .calculator-button,
+  .form-button,
+  .action-button {
+    min-height: var(--touch-target-size);
+    padding: 12px 16px;
+  }
+
+  .touch-optimized {
+    display: block;
+  }
+
+  .hover-only {
+    display: none;
+  }
+
+  /* Remove hover effects on touch devices */
+  button:hover,
+  .button:hover {
+    background-color: initial;
+    transform: none;
+  }
+
+  /* Enhanced touch feedback */
+  button:active,
+  .button:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Mouse/trackpad devices */
+  .touch-optimized {
+    display: none;
+  }
+
+  .hover-only {
+    display: block;
+  }
+
+  .calculator-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Landscape orientation optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Landscape mobile devices */
+  .landscape-compact {
+    display: flex;
+  }
+
+  .portrait-only {
+    display: none;
+  }
+
+  .calculator-interface {
+    flex-direction: row;
+    height: 100vh;
+  }
+
+  .calculator-display {
+    width: 40%;
+    height: 100%;
+  }
+
+  .calculator-buttons {
+    width: 60%;
+    height: 100%;
+  }
+
+  .bottom-navigation {
+    display: none;
+  }
+
+  .header {
+    height: auto;
+    padding: 8px 16px;
+  }
+}
+
+/* Print optimizations */
+@media print {
+  .mobile-only,
+  .touch-optimized,
+  .bottom-navigation,
+  .fab,
+  .widget-fab,
+  .install-banner {
+    display: none !important;
+  }
+}
+
+/* Dark mode optimizations for mobile */
+@media (prefers-color-scheme: dark) {
+  .platform-ios .calculator-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .platform-ios .bottom-navigation {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .platform-android .calculator-button {
+    background: #2d2d2d;
+    color: #fff;
+  }
+
+  .calculator-display {
+    background: #1a1a1a;
+    color: #fff;
+  }
+}
+
+/* Animation performance optimizations */
+.will-change-transform {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Memory management */
+.offscreen {
+  content-visibility: hidden;
+}
+
+.lazy-load {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+/* Utility classes for mobile development */
+.mobile-hide {
+  display: none;
+}
+
+.mobile-show {
+  display: block;
+}
+
+.touch-none {
+  pointer-events: none;
+}
+
+.touch-auto {
+  pointer-events: auto;
+}
+
+.select-none {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.tap-highlight-transparent {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Focus management for mobile */
+.focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.focus-visible:not(.focus-visible) {
+  outline: none;
+}

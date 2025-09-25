@@ -1,0 +1,95 @@
+{
+  "name": "globaltaxcalc-integration-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive integration and load testing suite for GlobalTaxCalc.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:integration": "jest --testPathPattern=integration --detectOpenHandles --forceExit",
+    "test:e2e": "jest --testPathPattern=e2e --detectOpenHandles --forceExit",
+    "test:load": "artillery run load-tests/artillery-config.yml",
+    "test:load:k6": "k6 run load-tests/k6-script.js",
+    "test:security": "npm run test:security:owasp && npm run test:security:custom",
+    "test:security:owasp": "zap-baseline.py -t http://localhost:3000",
+    "test:security:custom": "jest --testPathPattern=security --detectOpenHandles --forceExit",
+    "test:all": "npm run test:integration && npm run test:e2e && npm run test:security:custom",
+    "test:ci": "npm run test:all -- --ci --coverage --watchAll=false",
+    "load:baseline": "artillery run load-tests/baseline-load.yml",
+    "load:stress": "artillery run load-tests/stress-test.yml",
+    "load:spike": "artillery run load-tests/spike-test.yml",
+    "security:scan": "npm audit && npm run test:security",
+    "performance:benchmark": "node performance/benchmark.js",
+    "health:check": "node health/check-all-services.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "form-data": "^4.0.0",
+    "ws": "^8.14.2",
+    "puppeteer": "^21.5.2",
+    "cheerio": "^1.0.0-rc.12",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "uuid": "^9.0.1",
+    "faker": "^6.6.6",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "csv-parser": "^3.0.0",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "artillery": "^2.0.1",
+    "k6": "^0.47.0",
+    "supertest": "^6.3.3",
+    "@jest/globals": "^29.7.0",
+    "jest-html-reporter": "^3.10.2",
+    "artillery-plugin-metrics-by-endpoint": "^1.6.0",
+    "artillery-plugin-prometheus": "^1.2.0",
+    "owasp-zap": "^0.2.0",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1",
+    "cross-env": "^7.0.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "testTimeout": 60000,
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!**/*.config.js"
+    ],
+    "coverageReporters": ["text", "lcov", "html"],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/coverage/"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-html-reporter",
+        {
+          "pageTitle": "GlobalTaxCalc Integration Test Report",
+          "outputPath": "reports/test-report.html",
+          "includeFailureMsg": true,
+          "includeSuiteFailure": true
+        }
+      ]
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "integration-testing",
+    "load-testing",
+    "security-testing",
+    "globaltaxcalc",
+    "microservices",
+    "e2e-testing"
+  ],
+  "author": "GlobalTaxCalc Team",
+  "license": "MIT"
+}

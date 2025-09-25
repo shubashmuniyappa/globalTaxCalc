@@ -1,0 +1,301 @@
+# Docker Compose for GlobalTaxCalc Analytics Infrastructure
+version: '3.8'
+
+services:
+  # ClickHouse Database for Analytics
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11
+    container_name: globaltaxcalc-clickhouse
+    ports:
+      - "8123:8123"  # HTTP
+      - "9000:9000"  # Native
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./config/clickhouse:/etc/clickhouse-server/config.d
+      - ./scripts/clickhouse:/docker-entrypoint-initdb.d
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: analytics_user
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics_password}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - analytics_network
+
+  # Redis for Caching and Celery
+  redis:
+    image: redis:7.2-alpine
+    container_name: globaltaxcalc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    networks:
+      - analytics_network
+
+  # PostgreSQL for Superset Metadata
+  postgres:
+    image: postgres:15
+    container_name: globaltaxcalc-postgres
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-superset_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - analytics_network
+
+  # Apache Superset BI Platform
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    container_name: globaltaxcalc-superset
+    environment:
+      # Database
+      DATABASE_DB: superset
+      DATABASE_HOST: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-superset_password}
+      DATABASE_USER: superset
+      DATABASE_PORT: 5432
+      DATABASE_DIALECT: postgresql
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+
+      # Security
+      SECRET_KEY: ${SUPERSET_SECRET_KEY:-your_secret_key_here}
+      SUPERSET_LOAD_EXAMPLES: "no"
+
+      # Features
+      FEATURE_FLAGS: |
+        {
+          "DASHBOARD_NATIVE_FILTERS": true,
+          "DASHBOARD_CROSS_FILTERS": true,
+          "DASHBOARD_RBAC": true,
+          "ENABLE_TEMPLATE_PROCESSING": true,
+          "ALERT_REPORTS": true,
+          "DYNAMIC_PLUGINS": true
+        }
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+      - redis
+      - clickhouse
+    volumes:
+      - ./config/superset:/app/pythonpath_dev
+      - superset_home:/app/superset_home
+    networks:
+      - analytics_network
+
+  # Celery Worker for Background Tasks
+  superset-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    container_name: globaltaxcalc-superset-worker
+    command: ["celery", "--app=superset.tasks.celery_app:app", "worker", "--pool=prefork", "-O", "fair", "-c", "4"]
+    environment:
+      DATABASE_DB: superset
+      DATABASE_HOST: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-superset_password}
+      DATABASE_USER: superset
+      DATABASE_PORT: 5432
+      DATABASE_DIALECT: postgresql
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      SECRET_KEY: ${SUPERSET_SECRET_KEY:-your_secret_key_here}
+    depends_on:
+      - postgres
+      - redis
+      - clickhouse
+    volumes:
+      - ./config/superset:/app/pythonpath_dev
+      - superset_home:/app/superset_home
+    networks:
+      - analytics_network
+
+  # Celery Beat for Scheduled Tasks
+  superset-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    container_name: globaltaxcalc-superset-beat
+    command: ["celery", "--app=superset.tasks.celery_app:app", "beat", "--pidfile=", "--schedule=/tmp/celerybeat-schedule"]
+    environment:
+      DATABASE_DB: superset
+      DATABASE_HOST: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-superset_password}
+      DATABASE_USER: superset
+      DATABASE_PORT: 5432
+      DATABASE_DIALECT: postgresql
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      SECRET_KEY: ${SUPERSET_SECRET_KEY:-your_secret_key_here}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./config/superset:/app/pythonpath_dev
+      - superset_home:/app/superset_home
+    networks:
+      - analytics_network
+
+  # ML Analytics Service
+  ml-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    container_name: globaltaxcalc-ml-analytics
+    ports:
+      - "8000:8000"
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: analytics_user
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+    depends_on:
+      - clickhouse
+      - redis
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ml_cache:/app/cache
+    networks:
+      - analytics_network
+
+  # Real-time Analytics Processor
+  realtime-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.realtime
+    container_name: globaltaxcalc-realtime-processor
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: analytics_user
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+    depends_on:
+      - clickhouse
+      - redis
+    volumes:
+      - ./config/realtime:/app/config
+      - realtime_logs:/app/logs
+    networks:
+      - analytics_network
+
+  # Grafana for System Monitoring
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: globaltaxcalc-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    networks:
+      - analytics_network
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: globaltaxcalc-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - analytics_network
+
+  # Node Exporter for System Metrics
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: globaltaxcalc-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - analytics_network
+
+  # Jupyter Lab for Data Science
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: globaltaxcalc-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-analytics_token}
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: analytics_user
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics_password}
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+      - jupyter_data:/home/jovyan/.jupyter
+    depends_on:
+      - clickhouse
+      - redis
+    networks:
+      - analytics_network
+
+volumes:
+  clickhouse_data:
+  redis_data:
+  postgres_data:
+  superset_home:
+  grafana_data:
+  prometheus_data:
+  ml_cache:
+  realtime_logs:
+  jupyter_data:
+
+networks:
+  analytics_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

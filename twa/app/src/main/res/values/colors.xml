@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand colors -->
+    <color name="colorPrimary">#667eea</color>
+    <color name="colorPrimaryDark">#4F46E5</color>
+    <color name="colorAccent">#667eea</color>
+
+    <!-- Background colors -->
+    <color name="backgroundColor">#ffffff</color>
+    <color name="backgroundColorDark">#1a1a1a</color>
+
+    <!-- Status bar and navigation colors -->
+    <color name="statusBarColor">#667eea</color>
+    <color name="navigationBarColor">#667eea</color>
+
+    <!-- Splash screen colors -->
+    <color name="splashBackground">#667eea</color>
+    <color name="splashText">#ffffff</color>
+
+    <!-- Additional theme colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray_light">#F5F5F5</color>
+    <color name="gray_medium">#9E9E9E</color>
+    <color name="gray_dark">#424242</color>
+
+    <!-- Success and error colors -->
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="warning">#FF9800</color>
+    <color name="info">#2196F3</color>
+</resources>

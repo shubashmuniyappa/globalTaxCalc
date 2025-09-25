@@ -1,0 +1,515 @@
+{{> header}}
+
+        <!-- Report Header -->
+        <div class="report-header">
+            <div class="company-info">
+                {{#if config.branding.logoPath}}
+                <img src="{{config.branding.logoPath}}" alt="{{config.branding.companyName}}" class="company-logo">
+                {{/if}}
+                <div class="company-details">
+                    <h1>{{config.branding.companyName}}</h1>
+                    <div class="tagline">Professional Tax Calculation Service</div>
+                </div>
+            </div>
+            <div class="report-meta">
+                <div class="date">{{formatDate timestamp format="full"}}</div>
+                <div>Tax Year: {{taxData.taxYear}}</div>
+                <div>Report ID: {{reportId}}</div>
+            </div>
+        </div>
+
+        <!-- Page Title -->
+        <h1 class="page-title">Comprehensive Tax Summary Report</h1>
+        <p class="page-subtitle">
+            Tax Year {{taxData.taxYear}} - {{userInfo.fullName}}
+            {{#if userInfo.filingStatus}}
+            ({{capitalize userInfo.filingStatus}})
+            {{/if}}
+        </p>
+
+        <!-- Key Metrics Overview -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Tax Summary Overview</h2>
+            </div>
+            <div class="section-content">
+                <div class="grid grid-4">
+                    <div class="metric-card">
+                        <div class="metric-label">Gross Income</div>
+                        <div class="metric-value">{{formatCurrency taxData.grossIncome}}</div>
+                        {{#if comparison.grossIncome}}
+                        <div class="metric-change {{#if_positive comparison.grossIncome.change}}positive{{else}}negative{{/if_positive}}">
+                            {{#if_positive comparison.grossIncome.change}}+{{/if_positive}}{{formatCurrency comparison.grossIncome.change}}
+                            ({{formatPercent comparison.grossIncome.changePercent}}) vs {{subtract taxData.taxYear 1}}
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Tax</div>
+                        <div class="metric-value">{{formatCurrency taxData.totalTax}}</div>
+                        <div class="metric-change">
+                            Effective Rate: {{formatPercent (divide taxData.totalTax taxData.grossIncome)}}
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Net Income</div>
+                        <div class="metric-value">{{formatCurrency (subtract taxData.grossIncome taxData.totalTax)}}</div>
+                        <div class="metric-change">
+                            After-tax: {{formatPercent (divide (subtract taxData.grossIncome taxData.totalTax) taxData.grossIncome)}}
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Tax Savings</div>
+                        <div class="metric-value">{{formatCurrency taxData.totalDeductions}}</div>
+                        <div class="metric-change positive">
+                            {{formatPercent (divide taxData.totalDeductions taxData.grossIncome)}} of income
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income Breakdown Chart -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Income vs Tax Breakdown</h2>
+            </div>
+            <div class="section-content">
+                <div class="chart-container" data-chart-config='{
+                    "type": "doughnut",
+                    "data": {
+                        "labels": ["Net Income", "Federal Tax", "State Tax", "Deductions"],
+                        "datasets": [{
+                            "data": [
+                                {{subtract taxData.grossIncome taxData.totalTax}},
+                                {{default taxData.federalTax 0}},
+                                {{default taxData.stateTax 0}},
+                                {{default taxData.totalDeductions 0}}
+                            ],
+                            "backgroundColor": ["#10b981", "#ef4444", "#f59e0b", "#8b5cf6"],
+                            "borderColor": "#ffffff",
+                            "borderWidth": 2
+                        }]
+                    },
+                    "options": {
+                        "responsive": true,
+                        "maintainAspectRatio": false,
+                        "plugins": {
+                            "legend": {
+                                "position": "right"
+                            },
+                            "tooltip": {
+                                "callbacks": {
+                                    "label": function(context) {
+                                        const value = context.parsed;
+                                        const total = {{taxData.grossIncome}};
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return context.label + ": " + window.currencyFormat.format(value) + " (" + percentage + "%)";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }'>
+                    <canvas class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax Calculation Details -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Tax Calculation Details</h2>
+            </div>
+            <div class="section-content">
+                <div class="grid grid-2">
+                    <!-- Federal Tax Breakdown -->
+                    <div>
+                        <h3 style="color: #1f2937; margin-bottom: 15px;">Federal Tax</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Amount</th>
+                                        <th>Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Income Tax</td>
+                                        <td class="amount">{{formatCurrency taxData.federalIncomeTax}}</td>
+                                        <td>{{formatPercent (divide taxData.federalIncomeTax taxData.grossIncome)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Social Security</td>
+                                        <td class="amount">{{formatCurrency taxData.socialSecurity}}</td>
+                                        <td>{{formatPercent (divide taxData.socialSecurity taxData.grossIncome)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medicare</td>
+                                        <td class="amount">{{formatCurrency taxData.medicare}}</td>
+                                        <td>{{formatPercent (divide taxData.medicare taxData.grossIncome)}}</td>
+                                    </tr>
+                                    {{#if taxData.additionalMedicare}}
+                                    <tr>
+                                        <td>Additional Medicare</td>
+                                        <td class="amount">{{formatCurrency taxData.additionalMedicare}}</td>
+                                        <td>{{formatPercent (divide taxData.additionalMedicare taxData.grossIncome)}}</td>
+                                    </tr>
+                                    {{/if}}
+                                    <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                                        <td><strong>Federal Total</strong></td>
+                                        <td class="amount"><strong>{{formatCurrency taxData.federalTax}}</strong></td>
+                                        <td><strong>{{formatPercent (divide taxData.federalTax taxData.grossIncome)}}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- State Tax Breakdown -->
+                    <div>
+                        <h3 style="color: #1f2937; margin-bottom: 15px;">State Tax ({{taxData.state}})</h3>
+                        {{#if taxData.stateTax}}
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Amount</th>
+                                        <th>Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>State Income Tax</td>
+                                        <td class="amount">{{formatCurrency taxData.stateIncomeTax}}</td>
+                                        <td>{{formatPercent (divide taxData.stateIncomeTax taxData.grossIncome)}}</td>
+                                    </tr>
+                                    {{#if taxData.stateDisabilityTax}}
+                                    <tr>
+                                        <td>State Disability</td>
+                                        <td class="amount">{{formatCurrency taxData.stateDisabilityTax}}</td>
+                                        <td>{{formatPercent (divide taxData.stateDisabilityTax taxData.grossIncome)}}</td>
+                                    </tr>
+                                    {{/if}}
+                                    {{#if taxData.stateFamilyTax}}
+                                    <tr>
+                                        <td>Family Leave</td>
+                                        <td class="amount">{{formatCurrency taxData.stateFamilyTax}}</td>
+                                        <td>{{formatPercent (divide taxData.stateFamilyTax taxData.grossIncome)}}</td>
+                                    </tr>
+                                    {{/if}}
+                                    <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                                        <td><strong>State Total</strong></td>
+                                        <td class="amount"><strong>{{formatCurrency taxData.stateTax}}</strong></td>
+                                        <td><strong>{{formatPercent (divide taxData.stateTax taxData.grossIncome)}}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <div class="highlight success">
+                            <strong>No State Income Tax</strong><br>
+                            {{taxData.state}} does not impose state income tax on residents.
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax Brackets Visualization -->
+        {{#if taxData.taxBrackets}}
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Tax Brackets Analysis</h2>
+            </div>
+            <div class="section-content">
+                <div class="chart-container" data-chart-config='{
+                    "type": "bar",
+                    "data": {
+                        "labels": [
+                            {{#each_with_index taxData.taxBrackets}}
+                            "{{#if first}}Up to {{formatCurrency max}}{{else}}{{#if (eq max "Infinity")}}Over {{formatCurrency min}}{{else}}{{formatCurrency min}} - {{formatCurrency max}}{{/if}}{{/if}}"{{#unless last}},{{/unless}}
+                            {{/each_with_index}}
+                        ],
+                        "datasets": [{
+                            "label": "Tax Rate (%)",
+                            "data": [{{#each taxData.taxBrackets}}{{multiply rate 100}}{{#unless @last}},{{/unless}}{{/each}}],
+                            "backgroundColor": [{{#each taxData.taxBrackets}}"{{getColor @index}}"{{#unless @last}},{{/unless}}{{/each}}],
+                            "borderColor": "#ffffff",
+                            "borderWidth": 2
+                        }]
+                    },
+                    "options": {
+                        "responsive": true,
+                        "maintainAspectRatio": false,
+                        "plugins": {
+                            "legend": {
+                                "display": false
+                            },
+                            "tooltip": {
+                                "callbacks": {
+                                    "label": function(context) {
+                                        return "Tax Rate: " + context.parsed.y.toFixed(1) + "%";
+                                    }
+                                }
+                            }
+                        },
+                        "scales": {
+                            "y": {
+                                "beginAtZero": true,
+                                "title": {
+                                    "display": true,
+                                    "text": "Tax Rate (%)"
+                                },
+                                "ticks": {
+                                    "callback": function(value) {
+                                        return value + "%";
+                                    }
+                                }
+                            },
+                            "x": {
+                                "title": {
+                                    "display": true,
+                                    "text": "Income Range"
+                                },
+                                "ticks": {
+                                    "maxRotation": 45
+                                }
+                            }
+                        }
+                    }
+                }'>
+                    <canvas class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Deductions and Credits -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Deductions and Credits</h2>
+            </div>
+            <div class="section-content">
+                <div class="grid grid-2">
+                    <!-- Deductions -->
+                    <div>
+                        <h3 style="color: #1f2937; margin-bottom: 15px;">Tax Deductions</h3>
+                        {{#if deductions}}
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Deduction Type</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each deductions}}
+                                    <tr>
+                                        <td>{{capitalize (replace @key "_" " ")}}</td>
+                                        <td class="amount">{{formatCurrency this}}</td>
+                                    </tr>
+                                    {{/each}}
+                                    <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                                        <td><strong>Total Deductions</strong></td>
+                                        <td class="amount"><strong>{{formatCurrency taxData.totalDeductions}}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <div class="highlight">
+                            <strong>Standard Deduction Applied</strong><br>
+                            Using standard deduction of {{formatCurrency taxData.standardDeduction}} for {{taxData.filingStatus}} filing status.
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- Tax Credits -->
+                    <div>
+                        <h3 style="color: #1f2937; margin-bottom: 15px;">Tax Credits</h3>
+                        {{#if credits}}
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Credit Type</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each credits}}
+                                    <tr>
+                                        <td>{{capitalize (replace @key "_" " ")}}</td>
+                                        <td class="amount positive">{{formatCurrency this}}</td>
+                                    </tr>
+                                    {{/each}}
+                                    <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                                        <td><strong>Total Credits</strong></td>
+                                        <td class="amount positive"><strong>{{formatCurrency taxData.totalCredits}}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <div class="highlight">
+                            <strong>No Tax Credits Applied</strong><br>
+                            Consider exploring available tax credits to reduce your tax burden.
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        {{#if recommendations}}
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Tax Optimization Recommendations</h2>
+            </div>
+            <div class="section-content">
+                {{#each recommendations}}
+                <div class="highlight {{#if savings}}success{{else}}{{category}}{{/if}}" style="margin-bottom: 15px;">
+                    <h4 style="margin-bottom: 8px; color: #1f2937;">{{title}}</h4>
+                    <p style="margin-bottom: 10px;">{{description}}</p>
+                    {{#if savings}}
+                    <div style="font-weight: 600; color: var(--success-color);">
+                        Potential Annual Savings: {{formatCurrency savings}}
+                    </div>
+                    {{/if}}
+                    {{#if impact}}
+                    <div style="font-size: 12px; color: var(--secondary-color); margin-top: 5px;">
+                        Impact: {{impact}}
+                    </div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Year-over-Year Comparison -->
+        {{#if yearComparison}}
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Year-over-Year Comparison</h2>
+            </div>
+            <div class="section-content">
+                <div class="chart-container" data-chart-config='{
+                    "type": "line",
+                    "data": {
+                        "labels": [{{#each yearComparison}}"{{year}}"{{#unless @last}},{{/unless}}{{/each}}],
+                        "datasets": [
+                            {
+                                "label": "Gross Income",
+                                "data": [{{#each yearComparison}}{{grossIncome}}{{#unless @last}},{{/unless}}{{/each}}],
+                                "borderColor": "{{config.branding.colors.primary}}",
+                                "backgroundColor": "{{config.branding.colors.primary}}20",
+                                "fill": false,
+                                "tension": 0.4
+                            },
+                            {
+                                "label": "Total Tax",
+                                "data": [{{#each yearComparison}}{{totalTax}}{{#unless @last}},{{/unless}}{{/each}}],
+                                "borderColor": "{{config.branding.colors.error}}",
+                                "backgroundColor": "{{config.branding.colors.error}}20",
+                                "fill": false,
+                                "tension": 0.4
+                            },
+                            {
+                                "label": "Net Income",
+                                "data": [{{#each yearComparison}}{{subtract grossIncome totalTax}}{{#unless @last}},{{/unless}}{{/each}}],
+                                "borderColor": "{{config.branding.colors.success}}",
+                                "backgroundColor": "{{config.branding.colors.success}}20",
+                                "fill": false,
+                                "tension": 0.4
+                            }
+                        ]
+                    },
+                    "options": {
+                        "responsive": true,
+                        "maintainAspectRatio": false,
+                        "plugins": {
+                            "legend": {
+                                "position": "top"
+                            },
+                            "tooltip": {
+                                "callbacks": {
+                                    "label": function(context) {
+                                        return context.dataset.label + ": " + window.currencyFormat.format(context.parsed.y);
+                                    }
+                                }
+                            }
+                        },
+                        "scales": {
+                            "y": {
+                                "beginAtZero": true,
+                                "title": {
+                                    "display": true,
+                                    "text": "Amount"
+                                },
+                                "ticks": {
+                                    "callback": function(value) {
+                                        return window.currencyFormat.format(value);
+                                    }
+                                }
+                            },
+                            "x": {
+                                "title": {
+                                    "display": true,
+                                    "text": "Tax Year"
+                                }
+                            }
+                        }
+                    }
+                }'>
+                    <canvas class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Executive Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="grid grid-2">
+                    <div>
+                        <h4 style="color: #1f2937; margin-bottom: 10px;">Key Findings</h4>
+                        <ul style="line-height: 1.8; color: #374151;">
+                            <li>Your effective federal tax rate is {{formatPercent (divide taxData.federalTax taxData.grossIncome)}}</li>
+                            {{#if taxData.stateTax}}
+                            <li>Your effective state tax rate is {{formatPercent (divide taxData.stateTax taxData.grossIncome)}}</li>
+                            {{/if}}
+                            <li>Your overall effective tax rate is {{formatPercent (divide taxData.totalTax taxData.grossIncome)}}</li>
+                            {{#if taxData.totalDeductions}}
+                            <li>Deductions saved you approximately {{formatCurrency (multiply taxData.totalDeductions 0.22)}} in taxes</li>
+                            {{/if}}
+                            {{#if taxData.totalCredits}}
+                            <li>Tax credits reduced your tax liability by {{formatCurrency taxData.totalCredits}}</li>
+                            {{/if}}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: #1f2937; margin-bottom: 10px;">Next Steps</h4>
+                        <ul style="line-height: 1.8; color: #374151;">
+                            <li>Review the tax optimization recommendations above</li>
+                            <li>Consider maximizing retirement account contributions</li>
+                            <li>Explore additional deduction opportunities</li>
+                            <li>Consult with a tax professional for personalized advice</li>
+                            <li>Keep organized records throughout the tax year</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+{{> footer}}

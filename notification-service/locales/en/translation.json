@@ -1,0 +1,181 @@
+{
+  "welcome": {
+    "subject": "Welcome to GlobalTaxCalc, {{firstName}}!",
+    "preview": "Get started with stress-free tax calculations",
+    "greeting": "Hi {{firstName}}",
+    "hero": {
+      "title": "Welcome to GlobalTaxCalc, {{firstName}}!",
+      "subtitle": "Your journey to stress-free tax calculations starts here"
+    },
+    "message": "Thank you for joining GlobalTaxCalc! We're excited to help you navigate your taxes with confidence and ease.",
+    "benefits_intro": "As a GlobalTaxCalc member, you now have access to:",
+    "features": {
+      "title": "What You Can Do Now",
+      "calculator": {
+        "title": "Accurate Tax Calculations",
+        "description": "Get precise tax estimates for multiple countries with our advanced calculators"
+      },
+      "reminders": {
+        "title": "Smart Tax Reminders",
+        "description": "Never miss a deadline with personalized reminders for your tax obligations"
+      },
+      "insights": {
+        "title": "Tax Optimization Tips",
+        "description": "Receive personalized advice to minimize your tax burden legally"
+      }
+    },
+    "cta": {
+      "title": "Ready to Calculate Your Taxes?",
+      "button": "Start Your First Calculation"
+    },
+    "next_steps": {
+      "title": "Your Next Steps",
+      "step1": {
+        "title": "Complete Your Profile",
+        "description": "Add your tax information for more accurate calculations"
+      },
+      "step2": {
+        "title": "Try Our Calculator",
+        "description": "Calculate your taxes for this year and see potential savings"
+      },
+      "step3": {
+        "title": "Set Up Reminders",
+        "description": "Never miss important tax deadlines with our smart reminder system"
+      }
+    },
+    "support": {
+      "message": "Questions? Our support team is here to help!"
+    }
+  },
+  "tax_reminder": {
+    "subject": "Tax Deadline Alert: {{deadline}} is approaching!",
+    "preview": "Only {{daysLeft}} days left until the tax deadline",
+    "greeting": "Hi {{firstName}}",
+    "urgent": {
+      "title": "Tax Deadline Approaching",
+      "subtitle": "{{deadline}} Deadline"
+    },
+    "countdown": {
+      "day_left": "Day Left",
+      "days_left": "Days Left",
+      "until_deadline": "until tax deadline"
+    },
+    "message": {
+      "before_deadline": "The tax filing deadline is {{deadline}}. Don't wait until the last minute!",
+      "last_chance": "This is your final reminder! The tax deadline is tomorrow.",
+      "overdue": "The tax deadline of {{deadline}} has passed. File your taxes immediately to avoid additional penalties."
+    },
+    "quick_action": {
+      "title": "Calculate Your Taxes Now",
+      "button": "Start Tax Calculation",
+      "subtitle": "Get your tax estimate in under 5 minutes"
+    },
+    "checklist": {
+      "title": "Tax Filing Checklist"
+    },
+    "important_dates": {
+      "title": "Important Upcoming Dates"
+    },
+    "tips": {
+      "title": "Last-Minute Tax Tips"
+    },
+    "help": {
+      "title": "Need Help?",
+      "message": "Our tax experts are here to assist you with any questions.",
+      "button": "Get Support"
+    },
+    "country_info": {
+      "title": "{{country}} Tax Information"
+    }
+  },
+  "premium": {
+    "subject": "Unlock Premium Tax Features - Special Offer Inside!",
+    "preview": "Advanced calculations, optimization tips, and priority support",
+    "greeting": "Hi {{firstName}}",
+    "hero": {
+      "title": "Upgrade to Premium",
+      "subtitle": "Unlock advanced tax features and save more money"
+    },
+    "personal_message": "You've used {{calculationsUsed}} calculations so far. Upgrade to Premium for unlimited access and advanced features!",
+    "features": {
+      "title": "Free vs Premium Features",
+      "advanced_calc": {
+        "title": "Advanced Tax Calculations",
+        "description": "Complex scenarios, multiple income sources, and detailed breakdowns",
+        "free_limitation": "Basic calculations only",
+        "premium_benefit": "Unlimited advanced calculations"
+      },
+      "optimization": {
+        "title": "Tax Optimization Strategies",
+        "description": "Personalized recommendations to minimize your tax burden",
+        "free_limitation": "General tips only",
+        "premium_benefit": "Personalized optimization strategies"
+      },
+      "support": {
+        "title": "Priority Customer Support",
+        "description": "Get help when you need it most",
+        "free_limitation": "Standard support (48-72 hours)",
+        "premium_benefit": "Priority support (within 4 hours)"
+      }
+    },
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "plan_name": "Premium Plan",
+      "per_month": "per month",
+      "save": "Save"
+    },
+    "cta": {
+      "title": "Start Your Premium Journey Today",
+      "button": "Upgrade to Premium",
+      "button_special": "Claim Special Offer",
+      "subtitle": "Cancel anytime. No hidden fees.",
+      "guarantee": "30-day money-back guarantee"
+    },
+    "testimonials": {
+      "title": "What Our Premium Users Say"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "question1": "Can I cancel my premium subscription anytime?",
+      "answer1": "Yes, you can cancel your premium subscription at any time. You'll continue to have access until the end of your billing period.",
+      "question2": "What payment methods do you accept?",
+      "answer2": "We accept all major credit cards, PayPal, and bank transfers in supported countries.",
+      "question3": "Is my financial data secure?",
+      "answer3": "Absolutely. We use bank-level encryption and never store your personal financial information on our servers."
+    },
+    "urgency": {
+      "title": "Limited Time Offer!",
+      "message": "This special offer expires on {{expires}}. Don't miss out!",
+      "button": "Upgrade Now"
+    }
+  },
+  "newsletter": {
+    "subject": "Your Weekly Tax Update from GlobalTaxCalc",
+    "preview": "Latest tax news, tips, and deadlines you need to know",
+    "greeting": "Hi {{firstName}}",
+    "intro": "Here's your weekly roundup of important tax news and updates.",
+    "sections": {
+      "news": "Tax News This Week",
+      "tips": "Tax Tips & Strategies",
+      "deadlines": "Upcoming Deadlines",
+      "calculator": "Calculator Spotlight"
+    }
+  },
+  "abandoned_calculation": {
+    "subject": "Complete your tax calculation - We saved your progress!",
+    "preview": "Pick up where you left off and get your tax estimate",
+    "greeting": "Hi {{firstName}}",
+    "message": "We noticed you started a tax calculation but didn't finish. Don't worry - we saved your progress!",
+    "cta": {
+      "title": "Continue Where You Left Off",
+      "button": "Complete My Calculation"
+    }
+  },
+  "common": {
+    "all_rights_reserved": "All rights reserved.",
+    "unsubscribe": "Unsubscribe",
+    "preferences": "Manage Preferences",
+    "view_online": "View this email online",
+    "company_name": "GlobalTaxCalc"
+  }
+}

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Report & Export Service
+  report-export-service:
+    build: .
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - HOST=0.0.0.0
+
+      # Report Service Settings
+      - MAX_REPORT_SIZE_MB=50
+      - CONCURRENT_REPORTS=5
+      - REPORT_TIMEOUT_MS=30000
+
+      # Branding
+      - COMPANY_NAME=GlobalTaxCalc
+      - DEFAULT_BRAND_COLOR=#2563eb
+      - WATERMARK_ENABLED=true
+      - PREMIUM_WATERMARK_DISABLED=true
+
+      # Localization
+      - DEFAULT_LANGUAGE=en
+      - SUPPORTED_LANGUAGES=en,es,fr,de,it
+      - DEFAULT_CURRENCY=USD
+      - DEFAULT_TIMEZONE=America/New_York
+
+      # PDF Generation
+      - PDF_QUALITY=high
+      - PDF_FORMAT=A4
+      - PDF_MARGIN=20mm
+      - CHART_RENDER_TIMEOUT=5000
+
+      # Export Settings
+      - CSV_DELIMITER=,
+      - CSV_ENCODING=utf8
+      - EXCEL_SHEET_NAME=Tax Report
+      - JSON_PRETTY_PRINT=true
+
+      # Security
+      - API_KEY_REQUIRED=true
+      - API_KEY=${API_KEY:-development-key-change-in-production}
+      - ALLOWED_ORIGINS=http://localhost:3000,https://globaltaxcalc.com
+
+      # Rate Limiting
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+
+      # Logging
+      - LOG_LEVEL=info
+      - LOG_FORMAT=combined
+      - ENABLE_METRICS=true
+
+      # Redis (if using caching)
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=false
+
+    volumes:
+      - ./temp:/app/temp
+      - ./reports:/app/reports
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./assets:/app/assets
+    restart: unless-stopped
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - report-export-service
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  redis_data:

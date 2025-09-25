@@ -1,0 +1,333 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GlobalTaxCalc - Service Specific Monitoring",
+    "tags": ["globaltaxcalc", "service", "detailed"],
+    "style": "dark",
+    "timezone": "browser",
+    "editable": true,
+    "hideControls": false,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "timepicker": {
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "query": "label_values(globaltaxcalc_http_requests_total, service)",
+          "refresh": 1,
+          "includeAll": false,
+          "multi": false
+        },
+        {
+          "name": "instance",
+          "type": "query",
+          "query": "label_values(globaltaxcalc_http_requests_total{service=\"$service\"}, instance)",
+          "refresh": 1,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true
+        }
+      ]
+    },
+    "refresh": "5s",
+    "schemaVersion": 30,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Requests by Status Code",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_http_requests_total{service=\"$service\",instance=~\"$instance\"}[5m])) by (status_code)",
+            "legendFormat": "{{status_code}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "min": 0
+          }
+        ],
+        "legend": {
+          "show": true,
+          "values": true,
+          "min": true,
+          "max": true,
+          "current": true,
+          "total": false,
+          "avg": true
+        }
+      },
+      {
+        "id": 2,
+        "title": "Response Time Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_http_request_duration_seconds_bucket{service=\"$service\",instance=~\"$instance\"}[5m])) by (le)",
+            "format": "heatmap",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "heatmap": {
+          "hideZeroBuckets": false
+        },
+        "dataFormat": "tsbuckets"
+      },
+      {
+        "id": 3,
+        "title": "Request Rate by Route",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_http_requests_total{service=\"$service\",instance=~\"$instance\"}[5m])) by (route)",
+            "legendFormat": "{{route}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Database Query Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(globaltaxcalc_db_query_duration_seconds_bucket{database=~\".*\"}[5m])) by (le, query_type))",
+            "legendFormat": "{{query_type}} P95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(globaltaxcalc_db_query_duration_seconds_bucket{database=~\".*\"}[5m])) by (le, query_type))",
+            "legendFormat": "{{query_type}} P50"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "yAxes": [
+          {
+            "label": "Query Time (s)",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Queries by Type",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_db_query_duration_seconds_count{database=~\".*\"}[5m])) by (query_type)",
+            "legendFormat": "{{query_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "yAxes": [
+          {
+            "label": "Queries/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Memory Usage Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "nodejs_heap_space_size_used_bytes{service=\"$service\"}",
+            "legendFormat": "{{space}} Used"
+          },
+          {
+            "expr": "nodejs_heap_space_size_total_bytes{service=\"$service\"}",
+            "legendFormat": "{{space}} Total"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "yAxes": [
+          {
+            "label": "Bytes",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Garbage Collection",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(nodejs_gc_duration_seconds_total{service=\"$service\"}[5m])",
+            "legendFormat": "{{kind}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        },
+        "yAxes": [
+          {
+            "label": "GC Time/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Active Handles and Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "nodejs_active_handles{service=\"$service\"}",
+            "legendFormat": "Active Handles"
+          },
+          {
+            "expr": "nodejs_active_requests{service=\"$service\"}",
+            "legendFormat": "Active Requests"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "yAxes": [
+          {
+            "label": "Count",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Event Loop Lag",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "nodejs_eventloop_lag_seconds{service=\"$service\"}",
+            "legendFormat": "Event Loop Lag"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        },
+        "yAxes": [
+          {
+            "label": "Seconds",
+            "min": 0
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 0.1,
+            "colorMode": "critical",
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Business Calculations by Type",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_business_calculations_total{service=\"$service\"}[5m])) by (calculation_type)",
+            "legendFormat": "{{calculation_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 38
+        },
+        "yAxes": [
+          {
+            "label": "Calculations/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Business Calculations Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(globaltaxcalc_business_calculations_total{service=\"$service\",success=\"true\"}[5m])) / sum(rate(globaltaxcalc_business_calculations_total{service=\"$service\"}[5m])) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 38
+        },
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 95,
+            "colorMode": "critical",
+            "op": "lt"
+          }
+        ]
+      }
+    ]
+  }
+}

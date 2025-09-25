@@ -1,0 +1,190 @@
+{
+  "company": {
+    "name": "GlobalTaxCalc",
+    "tagline": "Servicio Profesional de Cálculo de Impuestos",
+    "slogan": "Simplificando los Cálculos de Impuestos en Todo el Mundo"
+  },
+  "reports": {
+    "title": {
+      "taxSummary": "Informe Integral de Resumen Fiscal",
+      "taxBracket": "Informe de Análisis de Tramos Fiscales",
+      "yearComparison": "Comparación Fiscal Año tras Año",
+      "stateComparison": "Informe de Comparación de Impuestos Estatales",
+      "deductionAnalysis": "Informe de Análisis de Deducciones"
+    },
+    "subtitle": {
+      "taxYear": "Año Fiscal {{year}}",
+      "filingStatus": "Estado de Declaración: {{status}}",
+      "generatedFor": "Generado para {{name}}"
+    },
+    "sections": {
+      "overview": "Resumen General de Impuestos",
+      "breakdown": "Detalles del Cálculo de Impuestos",
+      "brackets": "Análisis de Tramos Fiscales",
+      "deductions": "Deducciones y Créditos",
+      "recommendations": "Recomendaciones de Optimización Fiscal",
+      "comparison": "Comparación Año tras Año",
+      "summary": "Resumen Ejecutivo",
+      "nextSteps": "Próximos Pasos"
+    }
+  },
+  "fields": {
+    "basic": {
+      "taxYear": "Año Fiscal",
+      "filingStatus": "Estado de Declaración",
+      "state": "Estado",
+      "country": "País"
+    },
+    "income": {
+      "grossIncome": "Ingresos Brutos",
+      "taxableIncome": "Ingresos Gravables",
+      "adjustedGrossIncome": "Ingresos Brutos Ajustados",
+      "netIncome": "Ingresos Netos",
+      "salary": "Salario/Sueldos",
+      "businessIncome": "Ingresos del Negocio",
+      "investmentIncome": "Ingresos de Inversión",
+      "rentalIncome": "Ingresos de Alquiler",
+      "otherIncome": "Otros Ingresos"
+    },
+    "taxes": {
+      "totalTax": "Total de Impuestos",
+      "federalTax": "Impuesto Federal",
+      "stateTax": "Impuesto Estatal",
+      "federalIncomeTax": "Impuesto Federal sobre la Renta",
+      "stateIncomeTax": "Impuesto Estatal sobre la Renta",
+      "socialSecurity": "Impuesto del Seguro Social",
+      "medicare": "Impuesto de Medicare",
+      "additionalMedicare": "Impuesto Adicional de Medicare",
+      "stateDisabilityTax": "Impuesto Estatal de Discapacidad",
+      "stateFamilyTax": "Impuesto Estatal de Licencia Familiar"
+    },
+    "rates": {
+      "effectiveRate": "Tasa Impositiva Efectiva",
+      "marginalRate": "Tasa Impositiva Marginal",
+      "takeHomeRate": "Tasa de Ingresos Netos"
+    },
+    "deductions": {
+      "totalDeductions": "Total de Deducciones",
+      "standardDeduction": "Deducción Estándar",
+      "itemizedDeductions": "Deducciones Detalladas",
+      "mortgageInterest": "Intereses Hipotecarios",
+      "stateLocalTaxes": "Impuestos Estatales y Locales",
+      "charitableDonations": "Donaciones Caritativas",
+      "medicalExpenses": "Gastos Médicos",
+      "retirementContributions": "Contribuciones de Jubilación"
+    },
+    "credits": {
+      "totalCredits": "Total de Créditos",
+      "childTaxCredit": "Crédito Fiscal por Hijos",
+      "earnedIncomeCredit": "Crédito por Ingresos del Trabajo",
+      "educationCredit": "Crédito Educativo",
+      "energyCredit": "Crédito de Energía"
+    }
+  },
+  "charts": {
+    "titles": {
+      "incomeBreakdown": "Desglose de Ingresos vs Impuestos",
+      "taxBrackets": "Visualización de Tramos Fiscales",
+      "yearComparison": "Comparación Año tras Año",
+      "stateComparison": "Comparación de Impuestos Estatales",
+      "deductionCategories": "Categorías de Deducciones"
+    },
+    "labels": {
+      "netIncome": "Ingresos Netos",
+      "federalTax": "Impuesto Federal",
+      "stateTax": "Impuesto Estatal",
+      "deductions": "Deducciones",
+      "grossIncome": "Ingresos Brutos",
+      "totalTax": "Total de Impuestos",
+      "taxRate": "Tasa Impositiva",
+      "incomeRange": "Rango de Ingresos",
+      "amount": "Cantidad",
+      "year": "Año"
+    }
+  },
+  "recommendations": {
+    "title": "Recomendaciones de Optimización Fiscal",
+    "categories": {
+      "retirement": "Planificación de Jubilación",
+      "deductions": "Optimización de Deducciones",
+      "credits": "Créditos Fiscales",
+      "investment": "Estrategia de Inversión",
+      "timing": "Cronometraje Fiscal"
+    },
+    "suggestions": {
+      "maximize401k": {
+        "title": "Maximizar Contribuciones 401(k)",
+        "description": "Considere aumentar sus contribuciones al 401(k) para reducir los ingresos gravables y ahorrar para la jubilación.",
+        "impact": "Alto - Ahorros fiscales inmediatos más crecimiento para la jubilación"
+      },
+      "considerIRA": {
+        "title": "Considerar Contribuciones IRA",
+        "description": "Las contribuciones IRA tradicionales pueden ser deducibles de impuestos dependiendo de su nivel de ingresos.",
+        "impact": "Medio - Ahorros adicionales de jubilación con impuestos diferidos"
+      },
+      "maximizeHSA": {
+        "title": "Maximizar Contribuciones HSA",
+        "description": "Las contribuciones HSA tienen triple ventaja fiscal: deducibles, crecen libres de impuestos y se retiran libres de impuestos para gastos médicos.",
+        "impact": "Alto - La mejor cuenta con ventajas fiscales disponible"
+      },
+      "taxLossHarvesting": {
+        "title": "Cosecha de Pérdidas Fiscales",
+        "description": "Considere realizar pérdidas de capital para compensar ganancias y reducir la obligación fiscal.",
+        "impact": "Variable - Depende de las pérdidas disponibles"
+      }
+    }
+  },
+  "formats": {
+    "currency": {
+      "symbol": "$",
+      "code": "USD",
+      "name": "Dólar Estadounidense"
+    },
+    "date": {
+      "short": "DD/MM/YYYY",
+      "medium": "DD MMM YYYY",
+      "long": "DD [de] MMMM [de] YYYY",
+      "full": "dddd, DD [de] MMMM [de] YYYY"
+    },
+    "number": {
+      "decimal": ",",
+      "thousands": ".",
+      "grouping": 3
+    }
+  },
+  "messages": {
+    "generating": "Generando informe...",
+    "success": "Informe generado exitosamente",
+    "error": "Ocurrió un error al generar el informe",
+    "noData": "No hay datos disponibles",
+    "loading": "Cargando...",
+    "complete": "Completo",
+    "pending": "Pendiente",
+    "failed": "Falló"
+  },
+  "export": {
+    "formats": {
+      "pdf": "Documento PDF",
+      "csv": "Hoja de Cálculo CSV",
+      "excel": "Libro de Excel",
+      "json": "Datos JSON"
+    },
+    "actions": {
+      "download": "Descargar",
+      "export": "Exportar",
+      "save": "Guardar",
+      "print": "Imprimir",
+      "share": "Compartir"
+    }
+  },
+  "disclaimer": {
+    "title": "Descargo de Responsabilidad Importante",
+    "text": "Este informe es generado por {{companyName}} únicamente con fines informativos. Los cálculos de impuestos son estimaciones basadas en los datos proporcionados y las leyes fiscales actuales. Por favor consulte con un profesional fiscal calificado para obtener asesoramiento personalizado. La información contenida en este informe no debe considerarse como asesoramiento fiscal profesional. {{companyName}} no es responsable de errores u omisiones en los cálculos fiscales."
+  },
+  "footer": {
+    "generatedBy": "Informe generado por {{companyName}}",
+    "generatedOn": "Informe generado el {{date}}",
+    "reportId": "ID del Informe: {{id}}",
+    "version": "Versión: {{version}}"
+  }
+}

@@ -1,0 +1,228 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{t "tax_reminder.subject" deadline=(formatDate taxDeadline "MMMM Do, YYYY")}}</mj-title>
+    <meta name="subject" content="{{t 'tax_reminder.subject' deadline=(formatDate taxDeadline 'MMMM Do, YYYY')}}" />
+    <mj-preview>{{t "tax_reminder.preview" daysLeft=daysUntilDeadline}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#333333" line-height="1.6" />
+      <mj-button background-color="#dc3545" border-radius="6px" font-size="16px" font-weight="600" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      .urgent-banner { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+      .countdown { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; }
+      .checklist-item { margin-bottom: 12px; }
+    </mj-style>
+  </mj-head>
+
+  <mj-body background-color="#f8f9fa">
+    <!-- Header -->
+    <mj-section background-color="#ffffff" padding="20px 0">
+      <mj-column>
+        <mj-image src="{{asset 'images/logo-email.png'}}" alt="GlobalTaxCalc" width="200px" />
+      </mj-column>
+    </mj-section>
+
+    <!-- Urgent Banner -->
+    <mj-section css-class="urgent-banner" background-color="#dc3545" padding="30px 20px">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="24px" font-weight="bold">
+          🚨 {{t "tax_reminder.urgent.title"}}
+        </mj-text>
+        <mj-text align="center" color="#ffffff" font-size="18px" padding-top="10px">
+          {{t "tax_reminder.urgent.subtitle" deadline=(formatDate taxDeadline "MMMM Do, YYYY")}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Countdown Section -->
+    <mj-section background-color="#ffffff" padding="30px">
+      <mj-column>
+        <mj-text align="center" font-size="18px" color="#333333">
+          {{t "tax_reminder.greeting" firstName=firstName}},
+        </mj-text>
+        <mj-spacer height="20px" />
+
+        <!-- Countdown Box -->
+        <mj-table css-class="countdown" width="100%" cellpadding="20">
+          <tr>
+            <td style="text-align: center; background: #fff3cd; border-radius: 8px; padding: 20px;">
+              <div style="font-size: 48px; font-weight: bold; color: #856404; margin-bottom: 10px;">
+                {{daysUntilDeadline}}
+              </div>
+              <div style="font-size: 18px; color: #856404; font-weight: 600;">
+                {{#if_eq daysUntilDeadline 1}}
+                  {{t "tax_reminder.countdown.day_left"}}
+                {{else}}
+                  {{t "tax_reminder.countdown.days_left"}}
+                {{/if_eq}}
+              </div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 8px;">
+                {{t "tax_reminder.countdown.until_deadline"}}
+              </div>
+            </td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Message Section -->
+    <mj-section background-color="#ffffff" padding="0 30px 30px 30px">
+      <mj-column>
+        {{#if_eq reminderType "before_deadline"}}
+          <mj-text>
+            {{t "tax_reminder.message.before_deadline" deadline=(formatDate taxDeadline "MMMM Do")}}
+          </mj-text>
+        {{/if_eq}}
+
+        {{#if_eq reminderType "last_chance"}}
+          <mj-text color="#dc3545" font-weight="bold">
+            {{t "tax_reminder.message.last_chance"}}
+          </mj-text>
+        {{/if_eq}}
+
+        {{#if_eq reminderType "overdue"}}
+          <mj-text color="#dc3545">
+            {{t "tax_reminder.message.overdue" deadline=(formatDate taxDeadline "MMMM Do")}}
+          </mj-text>
+        {{/if_eq}}
+      </mj-column>
+    </mj-section>
+
+    <!-- Quick Action CTA -->
+    <mj-section background-color="#e9ecef" padding="30px">
+      <mj-column>
+        <mj-text align="center" font-size="20px" font-weight="bold" color="#333333">
+          {{t "tax_reminder.quick_action.title"}}
+        </mj-text>
+        <mj-button href="{{url '/calculator' utm_source='email' utm_medium='tax_reminder' utm_campaign='deadline_reminder'}}"
+                   background-color="#28a745" font-size="18px" padding="20px 0">
+          {{t "tax_reminder.quick_action.button"}}
+        </mj-button>
+        <mj-text align="center" color="#6c757d" font-size="14px">
+          {{t "tax_reminder.quick_action.subtitle"}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Checklist Section -->
+    <mj-section background-color="#ffffff" padding="40px 30px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="bold" color="#333333" padding-bottom="20px">
+          📋 {{t "tax_reminder.checklist.title"}}
+        </mj-text>
+
+        {{#each_with_index checklistItems}}
+          <mj-table css-class="checklist-item" width="100%">
+            <tr>
+              <td width="30px" style="vertical-align: top; padding-right: 15px;">
+                {{#if completed}}
+                  <div style="color: #28a745; font-size: 18px;">✅</div>
+                {{else}}
+                  <div style="color: #dc3545; font-size: 18px;">❌</div>
+                {{/if}}
+              </td>
+              <td style="vertical-align: top;">
+                <div style="font-weight: {{#if completed}}normal{{else}}bold{{/if}};
+                           color: {{#if completed}}#28a745{{else}}#333333{{/if}};">
+                  {{description}}
+                </div>
+                {{#if tip}}
+                  <div style="font-size: 14px; color: #6c757d; margin-top: 4px;">
+                    💡 {{tip}}
+                  </div>
+                {{/if}}
+              </td>
+            </tr>
+          </mj-table>
+        {{/each_with_index}}
+      </mj-column>
+    </mj-section>
+
+    <!-- Important Dates -->
+    {{#if importantDates}}
+    <mj-section background-color="#f8f9fa" padding="30px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="15px">
+          📅 {{t "tax_reminder.important_dates.title"}}
+        </mj-text>
+
+        {{#each importantDates}}
+          <mj-table width="100%" cellpadding="8">
+            <tr>
+              <td style="font-weight: bold; color: #333333; width: 40%;">{{name}}</td>
+              <td style="color: #666666;">{{formatDate date "MMMM Do, YYYY"}}</td>
+            </tr>
+          </mj-table>
+        {{/each}}
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Tax Tips -->
+    {{#if taxTips}}
+    <mj-section background-color="#ffffff" padding="30px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold" color="#333333" padding-bottom="15px">
+          💡 {{t "tax_reminder.tips.title"}}
+        </mj-text>
+
+        {{#each taxTips}}
+          <mj-text padding-bottom="15px">
+            <strong>{{title}}</strong><br>
+            {{description}}
+          </mj-text>
+        {{/each}}
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Need Help Section -->
+    <mj-section background-color="#e3f2fd" padding="30px">
+      <mj-column>
+        <mj-text align="center" font-size="18px" font-weight="bold" color="#1976d2">
+          {{t "tax_reminder.help.title"}}
+        </mj-text>
+        <mj-text align="center" color="#333333">
+          {{t "tax_reminder.help.message"}}
+        </mj-text>
+        <mj-button href="{{url '/support'}}" background-color="#1976d2" font-size="16px">
+          {{t "tax_reminder.help.button"}}
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Country-Specific Information -->
+    {{#if countryInfo}}
+    <mj-section background-color="#ffffff" padding="30px">
+      <mj-column>
+        <mj-text font-size="16px" color="#666666">
+          <strong>{{t "tax_reminder.country_info.title" country=countryInfo.name}}</strong><br>
+          {{countryInfo.specificInfo}}
+        </mj-text>
+        {{#if countryInfo.penalties}}
+          <mj-text color="#dc3545" font-size="14px">
+            ⚠️ {{countryInfo.penalties}}
+          </mj-text>
+        {{/if}}
+      </mj-column>
+    </mj-section>
+    {{/if}}
+
+    <!-- Footer -->
+    <mj-section background-color="#333333" padding="30px">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="14px">
+          © {{currentYear}} GlobalTaxCalc. {{t "common.all_rights_reserved"}}
+        </mj-text>
+        <mj-text align="center" color="#cccccc" font-size="12px">
+          {{companyAddress}}
+        </mj-text>
+        <mj-text align="center" font-size="12px" padding-top="15px">
+          <a href="{{unsubscribeUrl}}" style="color: #cccccc;">{{t "common.unsubscribe"}}</a> |
+          <a href="{{preferencesUrl}}" style="color: #cccccc;">{{t "common.preferences"}}</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

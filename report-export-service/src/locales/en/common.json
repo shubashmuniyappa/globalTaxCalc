@@ -1,0 +1,208 @@
+{
+  "company": {
+    "name": "GlobalTaxCalc",
+    "tagline": "Professional Tax Calculation Service",
+    "slogan": "Simplifying Tax Calculations Worldwide"
+  },
+  "reports": {
+    "title": {
+      "taxSummary": "Comprehensive Tax Summary Report",
+      "taxBracket": "Tax Bracket Analysis Report",
+      "yearComparison": "Year-over-Year Tax Comparison",
+      "stateComparison": "State Tax Comparison Report",
+      "deductionAnalysis": "Deduction Analysis Report"
+    },
+    "subtitle": {
+      "taxYear": "Tax Year {{year}}",
+      "filingStatus": "Filing Status: {{status}}",
+      "generatedFor": "Generated for {{name}}"
+    },
+    "sections": {
+      "overview": "Tax Summary Overview",
+      "breakdown": "Tax Calculation Details",
+      "brackets": "Tax Brackets Analysis",
+      "deductions": "Deductions and Credits",
+      "recommendations": "Tax Optimization Recommendations",
+      "comparison": "Year-over-Year Comparison",
+      "summary": "Executive Summary",
+      "nextSteps": "Next Steps"
+    }
+  },
+  "fields": {
+    "basic": {
+      "taxYear": "Tax Year",
+      "filingStatus": "Filing Status",
+      "state": "State",
+      "country": "Country"
+    },
+    "income": {
+      "grossIncome": "Gross Income",
+      "taxableIncome": "Taxable Income",
+      "adjustedGrossIncome": "Adjusted Gross Income",
+      "netIncome": "Net Income",
+      "salary": "Salary/Wages",
+      "businessIncome": "Business Income",
+      "investmentIncome": "Investment Income",
+      "rentalIncome": "Rental Income",
+      "otherIncome": "Other Income"
+    },
+    "taxes": {
+      "totalTax": "Total Tax",
+      "federalTax": "Federal Tax",
+      "stateTax": "State Tax",
+      "federalIncomeTax": "Federal Income Tax",
+      "stateIncomeTax": "State Income Tax",
+      "socialSecurity": "Social Security Tax",
+      "medicare": "Medicare Tax",
+      "additionalMedicare": "Additional Medicare Tax",
+      "stateDisabilityTax": "State Disability Tax",
+      "stateFamilyTax": "State Family Leave Tax"
+    },
+    "rates": {
+      "effectiveRate": "Effective Tax Rate",
+      "marginalRate": "Marginal Tax Rate",
+      "takeHomeRate": "Take-Home Rate"
+    },
+    "deductions": {
+      "totalDeductions": "Total Deductions",
+      "standardDeduction": "Standard Deduction",
+      "itemizedDeductions": "Itemized Deductions",
+      "mortgageInterest": "Mortgage Interest",
+      "stateLocalTaxes": "State and Local Taxes",
+      "charitableDonations": "Charitable Donations",
+      "medicalExpenses": "Medical Expenses",
+      "retirementContributions": "Retirement Contributions"
+    },
+    "credits": {
+      "totalCredits": "Total Credits",
+      "childTaxCredit": "Child Tax Credit",
+      "earnedIncomeCredit": "Earned Income Credit",
+      "educationCredit": "Education Credit",
+      "energyCredit": "Energy Credit"
+    }
+  },
+  "charts": {
+    "titles": {
+      "incomeBreakdown": "Income vs Tax Breakdown",
+      "taxBrackets": "Tax Brackets Visualization",
+      "yearComparison": "Year-over-Year Comparison",
+      "stateComparison": "State Tax Comparison",
+      "deductionCategories": "Deduction Categories"
+    },
+    "labels": {
+      "netIncome": "Net Income",
+      "federalTax": "Federal Tax",
+      "stateTax": "State Tax",
+      "deductions": "Deductions",
+      "grossIncome": "Gross Income",
+      "totalTax": "Total Tax",
+      "taxRate": "Tax Rate",
+      "incomeRange": "Income Range",
+      "amount": "Amount",
+      "year": "Year"
+    }
+  },
+  "recommendations": {
+    "title": "Tax Optimization Recommendations",
+    "categories": {
+      "retirement": "Retirement Planning",
+      "deductions": "Deduction Optimization",
+      "credits": "Tax Credits",
+      "investment": "Investment Strategy",
+      "timing": "Tax Timing"
+    },
+    "suggestions": {
+      "maximize401k": {
+        "title": "Maximize 401(k) Contributions",
+        "description": "Consider increasing your 401(k) contributions to reduce taxable income and save for retirement.",
+        "impact": "High - Immediate tax savings plus retirement growth"
+      },
+      "considerIRA": {
+        "title": "Consider IRA Contributions",
+        "description": "Traditional IRA contributions may be tax-deductible depending on your income level.",
+        "impact": "Medium - Additional tax-deferred retirement savings"
+      },
+      "maximizeHSA": {
+        "title": "Maximize HSA Contributions",
+        "description": "HSA contributions are triple tax-advantaged: deductible, grow tax-free, and withdraw tax-free for medical expenses.",
+        "impact": "High - Best tax-advantaged account available"
+      },
+      "taxLossHarvesting": {
+        "title": "Tax-Loss Harvesting",
+        "description": "Consider realizing capital losses to offset gains and reduce tax liability.",
+        "impact": "Variable - Depends on available losses"
+      }
+    }
+  },
+  "analysis": {
+    "keyFindings": "Key Findings",
+    "nextSteps": "Next Steps",
+    "insights": {
+      "effectiveRate": "Your effective federal tax rate is {{rate}}",
+      "stateRate": "Your effective state tax rate is {{rate}}",
+      "overallRate": "Your overall effective tax rate is {{rate}}",
+      "deductionSavings": "Deductions saved you approximately {{amount}} in taxes",
+      "creditSavings": "Tax credits reduced your tax liability by {{amount}}"
+    },
+    "recommendations": {
+      "reviewOptimizations": "Review the tax optimization recommendations above",
+      "maximizeRetirement": "Consider maximizing retirement account contributions",
+      "exploreDeductions": "Explore additional deduction opportunities",
+      "consultProfessional": "Consult with a tax professional for personalized advice",
+      "keepRecords": "Keep organized records throughout the tax year"
+    }
+  },
+  "formats": {
+    "currency": {
+      "symbol": "$",
+      "code": "USD",
+      "name": "US Dollar"
+    },
+    "date": {
+      "short": "MM/DD/YYYY",
+      "medium": "MMM DD, YYYY",
+      "long": "MMMM DD, YYYY",
+      "full": "dddd, MMMM DD, YYYY"
+    },
+    "number": {
+      "decimal": ".",
+      "thousands": ",",
+      "grouping": 3
+    }
+  },
+  "messages": {
+    "generating": "Generating report...",
+    "success": "Report generated successfully",
+    "error": "An error occurred while generating the report",
+    "noData": "No data available",
+    "loading": "Loading...",
+    "complete": "Complete",
+    "pending": "Pending",
+    "failed": "Failed"
+  },
+  "export": {
+    "formats": {
+      "pdf": "PDF Document",
+      "csv": "CSV Spreadsheet",
+      "excel": "Excel Workbook",
+      "json": "JSON Data"
+    },
+    "actions": {
+      "download": "Download",
+      "export": "Export",
+      "save": "Save",
+      "print": "Print",
+      "share": "Share"
+    }
+  },
+  "disclaimer": {
+    "title": "Important Disclaimer",
+    "text": "This report is generated by {{companyName}} for informational purposes only. Tax calculations are estimates based on provided data and current tax laws. Please consult with a qualified tax professional for personalized advice. The information contained in this report should not be considered as professional tax advice. {{companyName}} is not responsible for any errors or omissions in the tax calculations."
+  },
+  "footer": {
+    "generatedBy": "Report generated by {{companyName}}",
+    "generatedOn": "Report generated on {{date}}",
+    "reportId": "Report ID: {{id}}",
+    "version": "Version: {{version}}"
+  }
+}

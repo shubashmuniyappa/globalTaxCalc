@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App names -->
+    <string name="app_name">GlobalTaxCalc</string>
+    <string name="launcher_name">Tax Calculator</string>
+
+    <!-- Asset statements for TWA -->
+    <string name="asset_statements">[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"web\", \"site\": \"https://globaltaxcalc.com\"}}]</string>
+
+    <!-- App description and metadata -->
+    <string name="app_description">Free tax calculator and financial planning tool</string>
+    <string name="app_tagline">Calculate taxes for multiple countries and states</string>
+
+    <!-- Splash screen text -->
+    <string name="splash_title">GlobalTaxCalc</string>
+    <string name="splash_subtitle">Loading your tax calculator...</string>
+
+    <!-- Error messages -->
+    <string name="error_network">No internet connection available</string>
+    <string name="error_loading">Failed to load the application</string>
+    <string name="error_generic">Something went wrong</string>
+
+    <!-- Actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_share">Share</string>
+    <string name="action_save">Save</string>
+
+    <!-- Permissions -->
+    <string name="permission_location_rationale">Location access helps provide accurate local tax information</string>
+    <string name="permission_storage_rationale">Storage access is needed to save and export your calculations</string>
+    <string name="permission_notifications_rationale">Notifications help remind you of important tax deadlines</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Tax Reminders</string>
+    <string name="notification_channel_description">Important tax deadlines and reminders</string>
+    <string name="notification_tax_deadline_title">Tax Deadline Reminder</string>
+    <string name="notification_tax_deadline_content">Don\'t forget about your upcoming tax deadline</string>
+
+    <!-- Offline mode -->
+    <string name="offline_mode_title">Offline Mode</string>
+    <string name="offline_mode_message">You\'re currently offline. Some features may be limited.</string>
+    <string name="offline_calculations_available">Tax calculations are still available offline</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_copyright">© 2024 GlobalTaxCalc</string>
+    <string name="about_description">GlobalTaxCalc helps you calculate taxes accurately for multiple countries and states, plan for tax deadlines, and manage your financial planning needs.</string>
+
+    <!-- Features -->
+    <string name="feature_offline_calculations">Offline Calculations</string>
+    <string name="feature_multi_country">Multi-Country Support</string>
+    <string name="feature_tax_reminders">Tax Reminders</string>
+    <string name="feature_export_results">Export Results</string>
+    <string name="feature_privacy_focused">Privacy Focused</string>
+
+    <!-- Web fallback -->
+    <string name="web_fallback_title">Opening in Browser</string>
+    <string name="web_fallback_message">The app will open in your default browser</string>
+</resources>

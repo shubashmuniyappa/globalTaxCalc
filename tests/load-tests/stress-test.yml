@@ -1,0 +1,200 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Stress test phases
+    - duration: 60
+      arrivalRate: 10
+      name: "Baseline load"
+    - duration: 300
+      arrivalRate: 100
+      name: "Heavy load"
+    - duration: 120
+      arrivalRate: 200
+      name: "Extreme load"
+    - duration: 60
+      arrivalRate: 10
+      name: "Recovery"
+
+  timeout: 60
+
+  # Stress test thresholds (more aggressive)
+  ensure:
+    p95: 5000  # Allow higher response times under stress
+    p99: 10000
+    maxErrorRate: 15  # Allow higher error rate under extreme load
+
+  # Plugins
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+# Stress test scenarios focus on resource-intensive operations
+scenarios:
+  - name: "Intensive Tax Calculations"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Complex calculation with many deductions
+      - post:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            income: "{{ $randomInt(100000, 500000) }}"
+            country: "US"
+            state: "CA"
+            filingStatus: "married_joint"
+            year: 2023
+            deductions:
+              - type: "mortgage_interest"
+                amount: "{{ $randomInt(10000, 50000) }}"
+              - type: "state_local_taxes"
+                amount: "{{ $randomInt(5000, 25000) }}"
+              - type: "charitable"
+                amount: "{{ $randomInt(1000, 15000) }}"
+              - type: "medical"
+                amount: "{{ $randomInt(0, 10000) }}"
+              - type: "business_expenses"
+                amount: "{{ $randomInt(0, 20000) }}"
+            credits:
+              - type: "child_tax_credit"
+                amount: "{{ $randomInt(0, 6000) }}"
+              - type: "education_credit"
+                amount: "{{ $randomInt(0, 4000) }}"
+          expect:
+            - statusCode: 201
+
+  - name: "Concurrent Multi-Country Comparisons"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Large comparison across many countries
+      - post:
+          url: "/api/comparisons"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            scenarios:
+              - country: "US"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "CA"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "UK"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "DE"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "FR"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "JP"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+              - country: "AU"
+                income: "{{ $randomInt(50000, 150000) }}"
+                filingStatus: "single"
+          expect:
+            - statusCode: 201
+
+  - name: "Heavy Report Generation"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Create calculation
+      - post:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            income: "{{ $randomInt(60000, 120000) }}"
+            country: "US"
+            filingStatus: "married_joint"
+            year: 2023
+          capture:
+            - json: "$.calculationId"
+              as: "calculationId"
+
+      # Generate detailed PDF report
+      - post:
+          url: "/api/reports/generate"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            calculationId: "{{ calculationId }}"
+            format: "pdf"
+            options:
+              includeCharts: true
+              includeBreakdown: true
+              includeTaxForms: true
+              template: "detailed"
+              charts:
+                - type: "tax_breakdown_pie"
+                - type: "effective_rate_trend"
+                - type: "deduction_comparison"
+          expect:
+            - statusCode: 201
+
+  - name: "Database Stress Test"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Rapid consecutive reads
+      - get:
+          url: "/api/calculations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/reports"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/files"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/user/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/user/analytics"
+          headers:
+            Authorization: "Bearer {{ authToken }}"

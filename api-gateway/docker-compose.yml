@@ -1,57 +1,148 @@
-# Docker Compose for API Gateway local development
 version: '3.8'
 
 services:
+  # API Gateway
   api-gateway:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=debug
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - API_KEY_SECRET=${API_KEY_SECRET}
     depends_on:
       - redis
+      - prometheus
+    volumes:
+      - ./logs:/app/logs
     networks:
-      - globaltaxcalc-network
+      - gateway-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Redis for caching and rate limiting
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
-      - redis_data:/data
+      - redis-data:/data
     networks:
-      - globaltaxcalc-network
+      - gateway-network
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Grafana for monitoring dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - gateway-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Nginx as reverse proxy
   nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
+    image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - ENVIRONMENT=development
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
       - api-gateway
     networks:
-      - globaltaxcalc-network
+      - gateway-network
+    restart: unless-stopped
+
+  # Mock microservices for testing
+  auth-service:
+    image: kennethreitz/httpbin
+    ports:
+      - "3001:80"
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  calculation-service:
+    image: kennethreitz/httpbin
+    ports:
+      - "3011:80"
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  user-service:
+    image: kennethreitz/httpbin
+    ports:
+      - "3021:80"
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  report-service:
+    image: kennethreitz/httpbin
+    ports:
+      - "3031:80"
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  notification-service:
+    image: kennethreitz/httpbin
+    ports:
+      - "3041:80"
+    networks:
+      - gateway-network
     restart: unless-stopped
 
 volumes:
-  redis_data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
 
 networks:
-  globaltaxcalc-network:
+  gateway-network:
     driver: bridge

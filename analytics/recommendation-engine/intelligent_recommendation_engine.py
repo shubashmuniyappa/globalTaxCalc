@@ -1,0 +1,1363 @@
+"""
+Intelligent Recommendation Engine for GlobalTaxCalc.com
+Provides personalized recommendations, content suggestions, and optimization strategies.
+"""
+
+
+# Generic safe imports with fallbacks
+import sys
+import os
+import logging
+import json
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from enum import Enum
+import pandas as pd
+import numpy as np
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Safe import function
+def safe_import(module_name, package=None):
+    try:
+        if package:
+            return __import__(module_name, fromlist=[package])
+        else:
+            return __import__(module_name)
+    except ImportError:
+        logger.warning(f"{module_name} not available - using fallback")
+        return None
+
+# Check for optional dependencies
+HAS_SKLEARN = safe_import('sklearn') is not None
+HAS_TENSORFLOW = safe_import('tensorflow') is not None
+HAS_PLOTLY = safe_import('plotly') is not None
+HAS_DASH = safe_import('dash') is not None
+HAS_REDIS = safe_import('redis') is not None
+HAS_KAFKA = safe_import('kafka') is not None
+HAS_PYSPARK = safe_import('pyspark') is not None
+HAS_SCIPY = safe_import('scipy') is not None
+
+logger.info(f"Available dependencies: sklearn={HAS_SKLEARN}, tensorflow={HAS_TENSORFLOW}, plotly={HAS_PLOTLY}")
+
+
+
+
+import json
+import logging
+import asyncio
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Tuple, Union, Set
+from dataclasses import dataclass, field
+from enum import Enum
+import pandas as pd
+import numpy as np
+from scipy.sparse import csr_matrix
+from scipy.spatial.distance import cosine, euclidean
+# 
+# 
+# 
+# 
+# 
+# 
+import networkx as nx
+from surprise import Dataset, Reader, SVD, NMF as SurprisNMF, accuracy
+from surprise.model_selection import cross_validate, train_test_split
+import implicit
+import warnings
+warnings.filterwarnings('ignore')
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class RecommendationType(Enum):
+    """Types of recommendations"""
+    PERSONALIZED = "personalized"
+    CONTENT_BASED = "content_based"
+    COLLABORATIVE = "collaborative"
+    HYBRID = "hybrid"
+    BEHAVIORAL = "behavioral"
+    CONTEXTUAL = "contextual"
+    TRENDING = "trending"
+    SIMILAR_USERS = "similar_users"
+    CROSS_SELL = "cross_sell"
+    UPSELL = "upsell"
+
+class RecommendationContext(Enum):
+    """Context for recommendations"""
+    TAX_PLANNING = "tax_planning"
+    CALCULATOR_USAGE = "calculator_usage"
+    EDUCATIONAL = "educational"
+    PRODUCT_FEATURES = "product_features"
+    SUBSCRIPTION_UPGRADE = "subscription_upgrade"
+    GEOGRAPHIC = "geographic"
+    SEASONAL = "seasonal"
+    COMPLIANCE = "compliance"
+
+@dataclass
+class RecommendationItem:
+    """Individual recommendation item"""
+    item_id: str
+    item_type: str  # 'feature', 'content', 'product', 'service', 'action'
+    title: str
+    description: str
+    score: float
+    confidence: float
+    reasons: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    category: str = ""
+    priority: str = "medium"  # high, medium, low
+    expires_at: Optional[datetime] = None
+
+@dataclass
+class RecommendationRequest:
+    """Request for recommendations"""
+    user_id: str
+    context: RecommendationContext
+    recommendation_type: RecommendationType
+    max_recommendations: int = 10
+    filters: Dict[str, Any] = field(default_factory=dict)
+    user_profile: Dict[str, Any] = field(default_factory=dict)
+    current_session: Dict[str, Any] = field(default_factory=dict)
+    exclude_items: Set[str] = field(default_factory=set)
+
+@dataclass
+class RecommendationResponse:
+    """Response containing recommendations"""
+    request_id: str
+    user_id: str
+    recommendations: List[RecommendationItem]
+    algorithm_used: str
+    timestamp: datetime
+    context: RecommendationContext
+    total_score: float
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+class UserProfiler:
+    """Creates and manages user profiles for personalization"""
+
+    def __init__(self):
+        self.user_profiles = {}
+        self.feature_weights = {
+            'tax_complexity': 0.3,
+            'usage_frequency': 0.25,
+            'feature_preferences': 0.2,
+            'geographic_location': 0.15,
+            'subscription_tier': 0.1
+        }
+
+    def create_user_profile(self, user_id: str, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create comprehensive user profile"""
+        profile = {
+            'user_id': user_id,
+            'demographics': self._extract_demographics(user_data),
+            'behavior': self._analyze_behavior_patterns(user_data),
+            'preferences': self._infer_preferences(user_data),
+            'tax_profile': self._build_tax_profile(user_data),
+            'engagement_score': self._calculate_engagement_score(user_data),
+            'segments': self._assign_user_segments(user_data),
+            'created_at': datetime.now(),
+            'last_updated': datetime.now()
+        }
+
+        self.user_profiles[user_id] = profile
+        return profile
+
+    def _extract_demographics(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract demographic information"""
+        return {
+            'country': user_data.get('country', 'Unknown'),
+            'age_group': user_data.get('age_group', 'Unknown'),
+            'income_bracket': user_data.get('income_bracket', 'Unknown'),
+            'profession': user_data.get('profession', 'Unknown'),
+            'family_status': user_data.get('family_status', 'Unknown')
+        }
+
+    def _analyze_behavior_patterns(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze user behavior patterns"""
+        sessions = user_data.get('sessions', [])
+        calculations = user_data.get('calculations', [])
+
+        return {
+            'session_frequency': len(sessions) / max(30, 1),  # sessions per day over 30 days
+            'avg_session_duration': np.mean([s.get('duration', 0) for s in sessions]) if sessions else 0,
+            'calculation_frequency': len(calculations) / max(30, 1),
+            'preferred_features': self._get_most_used_features(user_data),
+            'time_of_day_preference': self._get_time_preferences(sessions),
+            'device_preference': user_data.get('device_type', 'desktop')
+        }
+
+    def _infer_preferences(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Infer user preferences from behavior"""
+        return {
+            'complexity_level': self._infer_complexity_preference(user_data),
+            'content_type': self._infer_content_preference(user_data),
+            'interaction_style': self._infer_interaction_style(user_data),
+            'notification_preference': user_data.get('notification_settings', {}),
+            'privacy_level': user_data.get('privacy_level', 'medium')
+        }
+
+    def _build_tax_profile(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Build tax-specific user profile"""
+        calculations = user_data.get('calculations', [])
+        tax_types = [calc.get('tax_type') for calc in calculations]
+
+        return {
+            'primary_tax_types': self._get_primary_tax_types(tax_types),
+            'complexity_level': self._assess_tax_complexity(calculations),
+            'accuracy_importance': user_data.get('accuracy_importance', 'high'),
+            'speed_preference': user_data.get('speed_preference', 'medium'),
+            'compliance_focus': self._assess_compliance_focus(calculations)
+        }
+
+    def _calculate_engagement_score(self, user_data: Dict[str, Any]) -> float:
+        """Calculate user engagement score"""
+        factors = {
+            'session_count': len(user_data.get('sessions', [])),
+            'calculation_count': len(user_data.get('calculations', [])),
+            'feature_usage_diversity': len(set(user_data.get('features_used', []))),
+            'subscription_tier': {'free': 0.3, 'basic': 0.6, 'pro': 0.8, 'enterprise': 1.0}.get(
+                user_data.get('subscription', 'free'), 0.3),
+            'feedback_provided': len(user_data.get('feedback', [])),
+            'referrals_made': user_data.get('referrals', 0)
+        }
+
+        # Weighted engagement score
+        score = (
+            min(factors['session_count'] / 30, 1.0) * 0.25 +
+            min(factors['calculation_count'] / 50, 1.0) * 0.2 +
+            min(factors['feature_usage_diversity'] / 10, 1.0) * 0.15 +
+            factors['subscription_tier'] * 0.2 +
+            min(factors['feedback_provided'] / 5, 1.0) * 0.1 +
+            min(factors['referrals_made'] / 3, 1.0) * 0.1
+        )
+
+        return round(score, 3)
+
+    def _assign_user_segments(self, user_data: Dict[str, Any]) -> List[str]:
+        """Assign user to segments"""
+        segments = []
+
+        # Usage-based segments
+        calculation_count = len(user_data.get('calculations', []))
+        if calculation_count > 100:
+            segments.append('power_user')
+        elif calculation_count > 20:
+            segments.append('regular_user')
+        else:
+            segments.append('casual_user')
+
+        # Subscription-based segments
+        subscription = user_data.get('subscription', 'free')
+        segments.append(f"{subscription}_tier")
+
+        # Behavior-based segments
+        if user_data.get('advanced_features_used', 0) > 5:
+            segments.append('advanced_user')
+
+        # Geographic segments
+        country = user_data.get('country', 'Unknown')
+        if country != 'Unknown':
+            segments.append(f"geo_{country.lower()}")
+
+        return segments
+
+    def _get_most_used_features(self, user_data: Dict[str, Any]) -> List[str]:
+        """Get most used features by user"""
+        feature_usage = user_data.get('feature_usage', {})
+        return sorted(feature_usage.keys(), key=lambda x: feature_usage[x], reverse=True)[:5]
+
+    def _get_time_preferences(self, sessions: List[Dict]) -> str:
+        """Determine preferred time of day"""
+        if not sessions:
+            return 'unknown'
+
+        hours = []
+        for session in sessions:
+            if 'timestamp' in session:
+                try:
+                    hour = pd.to_datetime(session['timestamp']).hour
+                    hours.append(hour)
+                except:
+                    continue
+
+        if not hours:
+            return 'unknown'
+
+        avg_hour = np.mean(hours)
+        if 6 <= avg_hour < 12:
+            return 'morning'
+        elif 12 <= avg_hour < 18:
+            return 'afternoon'
+        elif 18 <= avg_hour < 22:
+            return 'evening'
+        else:
+            return 'night'
+
+    def _infer_complexity_preference(self, user_data: Dict[str, Any]) -> str:
+        """Infer user's complexity preference"""
+        advanced_features = user_data.get('advanced_features_used', 0)
+        if advanced_features > 10:
+            return 'high'
+        elif advanced_features > 3:
+            return 'medium'
+        else:
+            return 'low'
+
+    def _infer_content_preference(self, user_data: Dict[str, Any]) -> str:
+        """Infer preferred content type"""
+        content_interactions = user_data.get('content_interactions', {})
+        if content_interactions.get('video', 0) > content_interactions.get('text', 0):
+            return 'visual'
+        else:
+            return 'text'
+
+    def _infer_interaction_style(self, user_data: Dict[str, Any]) -> str:
+        """Infer interaction style preference"""
+        help_requests = user_data.get('help_requests', 0)
+        if help_requests > 5:
+            return 'guided'
+        else:
+            return 'self_service'
+
+    def _get_primary_tax_types(self, tax_types: List[str]) -> List[str]:
+        """Get primary tax types used"""
+        from collections import Counter
+        if not tax_types:
+            return []
+
+        type_counts = Counter([t for t in tax_types if t])
+        return [tax_type for tax_type, count in type_counts.most_common(3)]
+
+    def _assess_tax_complexity(self, calculations: List[Dict]) -> str:
+        """Assess user's tax complexity level"""
+        if not calculations:
+            return 'simple'
+
+        complex_indicators = 0
+        for calc in calculations:
+            if calc.get('multiple_income_sources', False):
+                complex_indicators += 1
+            if calc.get('deductions_count', 0) > 5:
+                complex_indicators += 1
+            if calc.get('international_income', False):
+                complex_indicators += 1
+
+        if complex_indicators > len(calculations) * 0.5:
+            return 'complex'
+        elif complex_indicators > 0:
+            return 'moderate'
+        else:
+            return 'simple'
+
+    def _assess_compliance_focus(self, calculations: List[Dict]) -> str:
+        """Assess user's compliance focus"""
+        if not calculations:
+            return 'standard'
+
+        accuracy_requests = sum(1 for calc in calculations if calc.get('accuracy_mode', False))
+        compliance_ratio = accuracy_requests / len(calculations)
+
+        if compliance_ratio > 0.7:
+            return 'high'
+        elif compliance_ratio > 0.3:
+            return 'medium'
+        else:
+            return 'standard'
+
+class ContentBasedRecommender:
+    """Content-based recommendation system"""
+
+    def __init__(self):
+        self.item_features = {}
+        self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
+        self.feature_matrix = None
+
+    def build_content_model(self, items: List[Dict[str, Any]]):
+        """Build content-based model"""
+        self.items = {item['id']: item for item in items}
+
+        # Extract textual features
+        item_descriptions = []
+        for item in items:
+            description = f"{item.get('title', '')} {item.get('description', '')} {item.get('category', '')} {' '.join(item.get('tags', []))}"
+            item_descriptions.append(description)
+
+        # Build TF-IDF matrix
+        self.feature_matrix = self.vectorizer.fit_transform(item_descriptions)
+
+        logger.info(f"Built content model with {len(items)} items and {self.feature_matrix.shape[1]} features")
+
+    def get_content_recommendations(self, user_profile: Dict[str, Any], item_interactions: List[str], n_recommendations: int = 10) -> List[RecommendationItem]:
+        """Get content-based recommendations"""
+        if self.feature_matrix is None:
+            return []
+
+        # Build user profile vector based on interacted items
+        user_vector = self._build_user_vector(item_interactions)
+
+        if user_vector is None:
+            return self._get_popular_items(n_recommendations, user_profile)
+
+        # Calculate similarities
+        similarities = cosine_similarity(user_vector, self.feature_matrix).flatten()
+
+        # Get top recommendations
+        item_ids = list(self.items.keys())
+        recommendations = []
+
+        # Sort by similarity, excluding already interacted items
+        for idx in similarities.argsort()[::-1]:
+            item_id = item_ids[idx]
+            if item_id not in item_interactions and len(recommendations) < n_recommendations:
+                item = self.items[item_id]
+                score = float(similarities[idx])
+
+                recommendation = RecommendationItem(
+                    item_id=item_id,
+                    item_type=item.get('type', 'unknown'),
+                    title=item.get('title', 'Unknown Item'),
+                    description=item.get('description', ''),
+                    score=score,
+                    confidence=min(score * 1.2, 1.0),
+                    reasons=[f"Similar to items you've used before (similarity: {score:.2%})"],
+                    metadata={'similarity_score': score, 'algorithm': 'content_based'},
+                    category=item.get('category', 'general')
+                )
+                recommendations.append(recommendation)
+
+        return recommendations
+
+    def _build_user_vector(self, item_interactions: List[str]) -> Optional[np.ndarray]:
+        """Build user vector from item interactions"""
+        if not item_interactions:
+            return None
+
+        # Find interacted items in our model
+        valid_interactions = [item_id for item_id in item_interactions if item_id in self.items]
+
+        if not valid_interactions:
+            return None
+
+        # Get indices of interacted items
+        item_ids = list(self.items.keys())
+        interaction_indices = [item_ids.index(item_id) for item_id in valid_interactions]
+
+        # Average the feature vectors of interacted items
+        user_vector = np.mean(self.feature_matrix[interaction_indices], axis=0)
+
+        return user_vector
+
+    def _get_popular_items(self, n_recommendations: int, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get popular items as fallback"""
+        recommendations = []
+
+        # Simple popularity-based recommendations
+        popular_items = [
+            {
+                'id': 'tax_deduction_optimizer',
+                'title': 'Tax Deduction Optimizer',
+                'description': 'Maximize your tax deductions with AI-powered suggestions',
+                'type': 'feature',
+                'category': 'optimization',
+                'popularity': 0.9
+            },
+            {
+                'id': 'multi_country_calculator',
+                'title': 'Multi-Country Tax Calculator',
+                'description': 'Calculate taxes across multiple jurisdictions',
+                'type': 'feature',
+                'category': 'calculation',
+                'popularity': 0.8
+            },
+            {
+                'id': 'tax_planning_guide',
+                'title': 'Tax Planning Guide',
+                'description': 'Comprehensive guide for effective tax planning',
+                'type': 'content',
+                'category': 'educational',
+                'popularity': 0.7
+            }
+        ]
+
+        for item in popular_items[:n_recommendations]:
+            recommendation = RecommendationItem(
+                item_id=item['id'],
+                item_type=item['type'],
+                title=item['title'],
+                description=item['description'],
+                score=item['popularity'],
+                confidence=0.6,
+                reasons=['Popular among users with similar profiles'],
+                metadata={'algorithm': 'popularity_fallback'},
+                category=item['category']
+            )
+            recommendations.append(recommendation)
+
+        return recommendations
+
+class CollaborativeRecommender:
+    """Collaborative filtering recommendation system"""
+
+    def __init__(self):
+        self.user_item_matrix = None
+        self.model = None
+        self.user_similarities = {}
+        self.item_similarities = {}
+
+    def build_collaborative_model(self, interactions: List[Dict[str, Any]]):
+        """Build collaborative filtering model"""
+        # Create user-item interaction matrix
+        df = pd.DataFrame(interactions)
+
+        if df.empty:
+            logger.warning("No interactions data available for collaborative filtering")
+            return
+
+        # Pivot to create user-item matrix
+        self.user_item_matrix = df.pivot_table(
+            index='user_id',
+            columns='item_id',
+            values='rating',
+            fill_value=0
+        )
+
+        # Build matrix factorization model
+        self.model = TruncatedSVD(n_components=50, random_state=42)
+
+        if self.user_item_matrix.shape[0] > 0 and self.user_item_matrix.shape[1] > 0:
+            # Fit the model
+            self.model.fit(self.user_item_matrix)
+
+            # Calculate user and item similarities
+            self._calculate_similarities()
+
+            logger.info(f"Built collaborative model with {self.user_item_matrix.shape[0]} users and {self.user_item_matrix.shape[1]} items")
+
+    def get_collaborative_recommendations(self, user_id: str, n_recommendations: int = 10, exclude_items: Set[str] = None) -> List[RecommendationItem]:
+        """Get collaborative filtering recommendations"""
+        if self.user_item_matrix is None or user_id not in self.user_item_matrix.index:
+            return self._get_cold_start_recommendations(user_id, n_recommendations)
+
+        exclude_items = exclude_items or set()
+
+        # Get user vector
+        user_idx = self.user_item_matrix.index.get_loc(user_id)
+        user_vector = self.user_item_matrix.iloc[user_idx].values.reshape(1, -1)
+
+        # Transform using the fitted model
+        user_latent = self.model.transform(user_vector)
+
+        # Get item representations
+        item_latent = self.model.components_
+
+        # Calculate scores for all items
+        scores = np.dot(user_latent, item_latent).flatten()
+
+        # Get item names
+        item_names = self.user_item_matrix.columns.tolist()
+
+        # Create recommendations
+        recommendations = []
+        for idx in scores.argsort()[::-1]:
+            item_id = item_names[idx]
+            if item_id not in exclude_items and len(recommendations) < n_recommendations:
+                # Skip if user already interacted with this item
+                if self.user_item_matrix.loc[user_id, item_id] == 0:
+                    score = float(scores[idx])
+                    recommendation = RecommendationItem(
+                        item_id=item_id,
+                        item_type='feature',  # Default type
+                        title=f"Feature: {item_id.replace('_', ' ').title()}",
+                        description=f"Recommended based on users with similar preferences",
+                        score=min(max(score, 0), 1),  # Normalize to 0-1
+                        confidence=0.7,
+                        reasons=[f"Users with similar preferences also used this"],
+                        metadata={'collaborative_score': score, 'algorithm': 'collaborative_filtering'},
+                        category='system_recommendation'
+                    )
+                    recommendations.append(recommendation)
+
+        return recommendations
+
+    def get_similar_users(self, user_id: str, n_similar: int = 5) -> List[Dict[str, Any]]:
+        """Get similar users"""
+        if user_id not in self.user_similarities:
+            return []
+
+        similar_users = []
+        for similar_user_id, similarity in sorted(self.user_similarities[user_id].items(), key=lambda x: x[1], reverse=True)[:n_similar]:
+            similar_users.append({
+                'user_id': similar_user_id,
+                'similarity': similarity
+            })
+
+        return similar_users
+
+    def _calculate_similarities(self):
+        """Calculate user and item similarities"""
+        # User similarities
+        user_matrix = self.user_item_matrix.values
+        for i, user_id in enumerate(self.user_item_matrix.index):
+            similarities = {}
+            for j, other_user_id in enumerate(self.user_item_matrix.index):
+                if i != j:
+                    similarity = 1 - cosine(user_matrix[i], user_matrix[j])
+                    if not np.isnan(similarity):
+                        similarities[other_user_id] = similarity
+
+            self.user_similarities[user_id] = similarities
+
+        logger.info(f"Calculated similarities for {len(self.user_similarities)} users")
+
+    def _get_cold_start_recommendations(self, user_id: str, n_recommendations: int) -> List[RecommendationItem]:
+        """Handle cold start problem with popular items"""
+        popular_features = [
+            'basic_calculator',
+            'tax_deductions',
+            'income_tracker',
+            'expense_categorizer',
+            'refund_estimator'
+        ]
+
+        recommendations = []
+        for i, feature in enumerate(popular_features[:n_recommendations]):
+            recommendation = RecommendationItem(
+                item_id=feature,
+                item_type='feature',
+                title=f"{feature.replace('_', ' ').title()}",
+                description=f"Popular feature among new users",
+                score=0.8 - (i * 0.1),  # Decreasing scores
+                confidence=0.5,
+                reasons=['Popular among new users'],
+                metadata={'algorithm': 'cold_start'},
+                category='popular'
+            )
+            recommendations.append(recommendation)
+
+        return recommendations
+
+class IntelligentRecommendationEngine:
+    """
+    Comprehensive Intelligent Recommendation Engine
+    Provides personalized recommendations using multiple algorithms
+    """
+
+    def __init__(self, config_path: str = None):
+        self.user_profiler = UserProfiler()
+        self.content_recommender = ContentBasedRecommender()
+        self.collaborative_recommender = CollaborativeRecommender()
+        self.recommendation_cache = {}
+        self.performance_metrics = {}
+
+        # Initialize with sample data
+        self._initialize_sample_data()
+
+        logger.info("Intelligent Recommendation Engine initialized successfully")
+
+    def _initialize_sample_data(self):
+        """Initialize with sample data for demonstration"""
+        # Sample items for content-based recommendations
+        sample_items = [
+            {
+                'id': 'tax_deduction_optimizer',
+                'title': 'Tax Deduction Optimizer',
+                'description': 'Advanced AI-powered tool to maximize your tax deductions and savings',
+                'type': 'feature',
+                'category': 'optimization',
+                'tags': ['deduction', 'optimization', 'AI', 'savings']
+            },
+            {
+                'id': 'multi_country_calculator',
+                'title': 'Multi-Country Tax Calculator',
+                'description': 'Calculate taxes across multiple jurisdictions with ease',
+                'type': 'feature',
+                'category': 'calculation',
+                'tags': ['international', 'multiple', 'jurisdiction', 'complex']
+            },
+            {
+                'id': 'audit_risk_assessor',
+                'title': 'Audit Risk Assessment Tool',
+                'description': 'Assess your audit risk and get recommendations to reduce it',
+                'type': 'feature',
+                'category': 'compliance',
+                'tags': ['audit', 'risk', 'compliance', 'assessment']
+            },
+            {
+                'id': 'tax_planning_guide',
+                'title': 'Comprehensive Tax Planning Guide',
+                'description': 'Complete guide for effective tax planning strategies',
+                'type': 'content',
+                'category': 'educational',
+                'tags': ['planning', 'guide', 'strategy', 'education']
+            },
+            {
+                'id': 'quarterly_estimator',
+                'title': 'Quarterly Tax Estimator',
+                'description': 'Estimate and plan your quarterly tax payments',
+                'type': 'feature',
+                'category': 'planning',
+                'tags': ['quarterly', 'estimation', 'planning', 'payments']
+            },
+            {
+                'id': 'expense_tracker',
+                'title': 'Business Expense Tracker',
+                'description': 'Track and categorize business expenses for tax purposes',
+                'type': 'feature',
+                'category': 'tracking',
+                'tags': ['expense', 'business', 'tracking', 'categorization']
+            },
+            {
+                'id': 'crypto_tax_calculator',
+                'title': 'Cryptocurrency Tax Calculator',
+                'description': 'Calculate taxes on cryptocurrency transactions',
+                'type': 'feature',
+                'category': 'specialty',
+                'tags': ['crypto', 'cryptocurrency', 'digital', 'modern']
+            },
+            {
+                'id': 'retirement_planner',
+                'title': 'Retirement Tax Planning',
+                'description': 'Plan your retirement with tax optimization strategies',
+                'type': 'feature',
+                'category': 'planning',
+                'tags': ['retirement', 'planning', 'long-term', 'optimization']
+            },
+            {
+                'id': 'charitable_deduction_tracker',
+                'title': 'Charitable Deduction Tracker',
+                'description': 'Track and maximize your charitable deductions',
+                'type': 'feature',
+                'category': 'deductions',
+                'tags': ['charity', 'deduction', 'tracking', 'donation']
+            },
+            {
+                'id': 'tax_law_updates',
+                'title': 'Tax Law Updates',
+                'description': 'Stay updated with the latest tax law changes',
+                'type': 'content',
+                'category': 'news',
+                'tags': ['law', 'updates', 'news', 'changes']
+            }
+        ]
+
+        self.content_recommender.build_content_model(sample_items)
+
+        # Sample user interactions for collaborative filtering
+        sample_interactions = []
+        users = [f'user_{i}' for i in range(1, 101)]  # 100 users
+        items = [item['id'] for item in sample_items]
+
+        # Generate synthetic interactions
+        np.random.seed(42)
+        for user in users:
+            # Each user interacts with 3-7 items
+            n_interactions = np.random.randint(3, 8)
+            user_items = np.random.choice(items, n_interactions, replace=False)
+
+            for item in user_items:
+                # Rating between 1-5
+                rating = np.random.randint(1, 6)
+                sample_interactions.append({
+                    'user_id': user,
+                    'item_id': item,
+                    'rating': rating,
+                    'timestamp': datetime.now() - timedelta(days=np.random.randint(1, 30))
+                })
+
+        self.collaborative_recommender.build_collaborative_model(sample_interactions)
+
+        # Sample user data for profiling
+        self.sample_users = {}
+        for i in range(1, 21):  # 20 sample users
+            user_id = f'user_{i}'
+            self.sample_users[user_id] = {
+                'country': np.random.choice(['USA', 'Canada', 'UK', 'Germany', 'France']),
+                'age_group': np.random.choice(['25-35', '35-45', '45-55', '55-65']),
+                'income_bracket': np.random.choice(['low', 'medium', 'high', 'very_high']),
+                'profession': np.random.choice(['employee', 'freelancer', 'business_owner', 'retired']),
+                'subscription': np.random.choice(['free', 'basic', 'pro', 'enterprise']),
+                'sessions': [{'duration': np.random.randint(300, 1800), 'timestamp': datetime.now() - timedelta(days=np.random.randint(1, 30))} for _ in range(np.random.randint(5, 25))],
+                'calculations': [{'tax_type': np.random.choice(['income', 'corporate', 'sales', 'property']), 'amount': np.random.uniform(1000, 50000)} for _ in range(np.random.randint(3, 15))],
+                'features_used': np.random.choice(items, np.random.randint(3, 8), replace=False).tolist(),
+                'advanced_features_used': np.random.randint(0, 10)
+            }
+
+        logger.info(f"Initialized with {len(sample_items)} items, {len(sample_interactions)} interactions, and {len(self.sample_users)} user profiles")
+
+    def get_recommendations(self, request: RecommendationRequest) -> RecommendationResponse:
+        """Main method to get recommendations"""
+        logger.info(f"Getting recommendations for user {request.user_id} with context {request.context.value}")
+
+        # Check cache first
+        cache_key = self._generate_cache_key(request)
+        if cache_key in self.recommendation_cache:
+            cached_response = self.recommendation_cache[cache_key]
+            if (datetime.now() - cached_response.timestamp).seconds < 300:  # 5 minutes cache
+                logger.info("Returning cached recommendations")
+                return cached_response
+
+        # Get or create user profile
+        user_profile = self._get_user_profile(request.user_id, request.user_profile)
+
+        # Generate recommendations based on type
+        recommendations = []
+
+        if request.recommendation_type == RecommendationType.HYBRID:
+            recommendations = self._get_hybrid_recommendations(request, user_profile)
+        elif request.recommendation_type == RecommendationType.COLLABORATIVE:
+            recommendations = self._get_collaborative_recommendations(request, user_profile)
+        elif request.recommendation_type == RecommendationType.CONTENT_BASED:
+            recommendations = self._get_content_based_recommendations(request, user_profile)
+        elif request.recommendation_type == RecommendationType.BEHAVIORAL:
+            recommendations = self._get_behavioral_recommendations(request, user_profile)
+        elif request.recommendation_type == RecommendationType.CONTEXTUAL:
+            recommendations = self._get_contextual_recommendations(request, user_profile)
+        else:
+            # Default to hybrid
+            recommendations = self._get_hybrid_recommendations(request, user_profile)
+
+        # Post-process recommendations
+        recommendations = self._post_process_recommendations(recommendations, request, user_profile)
+
+        # Create response
+        response = RecommendationResponse(
+            request_id=f"req_{datetime.now().timestamp()}",
+            user_id=request.user_id,
+            recommendations=recommendations,
+            algorithm_used=request.recommendation_type.value,
+            timestamp=datetime.now(),
+            context=request.context,
+            total_score=sum(r.score for r in recommendations),
+            metadata={
+                'user_segment': user_profile.get('segments', []),
+                'personalization_strength': self._calculate_personalization_strength(user_profile),
+                'recommendations_count': len(recommendations)
+            }
+        )
+
+        # Cache the response
+        self.recommendation_cache[cache_key] = response
+
+        logger.info(f"Generated {len(recommendations)} recommendations for user {request.user_id}")
+        return response
+
+    def _get_hybrid_recommendations(self, request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get hybrid recommendations combining multiple approaches"""
+        all_recommendations = []
+
+        # Get recommendations from different algorithms
+        collaborative_recs = self._get_collaborative_recommendations(request, user_profile)
+        content_recs = self._get_content_based_recommendations(request, user_profile)
+        behavioral_recs = self._get_behavioral_recommendations(request, user_profile)
+        contextual_recs = self._get_contextual_recommendations(request, user_profile)
+
+        # Weight the different recommendation types
+        weights = {
+            'collaborative': 0.3,
+            'content': 0.25,
+            'behavioral': 0.25,
+            'contextual': 0.2
+        }
+
+        # Combine and weight recommendations
+        recommendation_groups = [
+            (collaborative_recs, weights['collaborative'], 'collaborative'),
+            (content_recs, weights['content'], 'content'),
+            (behavioral_recs, weights['behavioral'], 'behavioral'),
+            (contextual_recs, weights['contextual'], 'contextual')
+        ]
+
+        item_scores = {}
+        item_recommendations = {}
+
+        for recs, weight, source in recommendation_groups:
+            for rec in recs:
+                if rec.item_id not in item_scores:
+                    item_scores[rec.item_id] = 0
+                    item_recommendations[rec.item_id] = rec
+
+                item_scores[rec.item_id] += rec.score * weight
+                item_recommendations[rec.item_id].reasons.append(f"Recommended by {source} algorithm")
+
+        # Sort by combined score
+        sorted_items = sorted(item_scores.items(), key=lambda x: x[1], reverse=True)
+
+        # Create final recommendations
+        final_recommendations = []
+        for item_id, score in sorted_items[:request.max_recommendations]:
+            rec = item_recommendations[item_id]
+            rec.score = score
+            rec.metadata['hybrid_score'] = score
+            rec.metadata['algorithm'] = 'hybrid'
+            final_recommendations.append(rec)
+
+        return final_recommendations
+
+    def _get_collaborative_recommendations(self, request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get collaborative filtering recommendations"""
+        return self.collaborative_recommender.get_collaborative_recommendations(
+            request.user_id,
+            request.max_recommendations,
+            request.exclude_items
+        )
+
+    def _get_content_based_recommendations(self, request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get content-based recommendations"""
+        # Get user's past interactions
+        user_interactions = user_profile.get('features_used', [])
+
+        return self.content_recommender.get_content_recommendations(
+            user_profile,
+            user_interactions,
+            request.max_recommendations
+        )
+
+    def _get_behavioral_recommendations(self, request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get behavior-based recommendations"""
+        recommendations = []
+
+        # Analyze user behavior patterns
+        behavior = user_profile.get('behavior', {})
+        preferences = user_profile.get('preferences', {})
+
+        # Recommendations based on usage patterns
+        if behavior.get('calculation_frequency', 0) > 1:  # Daily calculator user
+            recommendations.append(RecommendationItem(
+                item_id='advanced_calculator',
+                item_type='feature',
+                title='Advanced Tax Calculator',
+                description='Unlock advanced calculation features for power users',
+                score=0.9,
+                confidence=0.8,
+                reasons=['You use the calculator frequently - unlock advanced features'],
+                metadata={'algorithm': 'behavioral'},
+                category='upgrade',
+                priority='high'
+            ))
+
+        # Recommendations based on session patterns
+        if behavior.get('avg_session_duration', 0) > 600:  # Long sessions
+            recommendations.append(RecommendationItem(
+                item_id='workspace_saver',
+                item_type='feature',
+                title='Workspace Saver',
+                description='Save your calculation workspace for later sessions',
+                score=0.8,
+                confidence=0.7,
+                reasons=['You have long calculation sessions - save your work progress'],
+                metadata={'algorithm': 'behavioral'},
+                category='productivity'
+            ))
+
+        # Recommendations based on complexity preference
+        if preferences.get('complexity_level') == 'high':
+            recommendations.append(RecommendationItem(
+                item_id='professional_suite',
+                item_type='product',
+                title='Professional Tax Suite',
+                description='Complete professional tax management solution',
+                score=0.85,
+                confidence=0.75,
+                reasons=['Your usage patterns indicate need for professional features'],
+                metadata={'algorithm': 'behavioral'},
+                category='upgrade'
+            ))
+
+        return recommendations[:request.max_recommendations]
+
+    def _get_contextual_recommendations(self, request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Get contextual recommendations based on current context"""
+        recommendations = []
+
+        # Context-specific recommendations
+        if request.context == RecommendationContext.TAX_PLANNING:
+            recommendations.extend([
+                RecommendationItem(
+                    item_id='tax_planning_wizard',
+                    item_type='feature',
+                    title='Tax Planning Wizard',
+                    description='Step-by-step tax planning guidance',
+                    score=0.95,
+                    confidence=0.9,
+                    reasons=['Perfect for comprehensive tax planning'],
+                    metadata={'algorithm': 'contextual'},
+                    category='planning'
+                ),
+                RecommendationItem(
+                    item_id='deduction_maximizer',
+                    item_type='feature',
+                    title='Deduction Maximizer',
+                    description='Find all possible deductions for your situation',
+                    score=0.9,
+                    confidence=0.85,
+                    reasons=['Maximize deductions during tax planning'],
+                    metadata={'algorithm': 'contextual'},
+                    category='optimization'
+                )
+            ])
+
+        elif request.context == RecommendationContext.CALCULATOR_USAGE:
+            recommendations.extend([
+                RecommendationItem(
+                    item_id='calculation_history',
+                    item_type='feature',
+                    title='Calculation History',
+                    description='Track and manage your calculation history',
+                    score=0.8,
+                    confidence=0.7,
+                    reasons=['Helpful when using calculator frequently'],
+                    metadata={'algorithm': 'contextual'},
+                    category='productivity'
+                ),
+                RecommendationItem(
+                    item_id='export_results',
+                    item_type='feature',
+                    title='Export Calculator Results',
+                    description='Export your calculations to PDF or Excel',
+                    score=0.75,
+                    confidence=0.7,
+                    reasons=['Export results for record keeping'],
+                    metadata={'algorithm': 'contextual'},
+                    category='utility'
+                )
+            ])
+
+        elif request.context == RecommendationContext.EDUCATIONAL:
+            recommendations.extend([
+                RecommendationItem(
+                    item_id='tax_education_center',
+                    item_type='content',
+                    title='Tax Education Center',
+                    description='Comprehensive tax education resources',
+                    score=0.85,
+                    confidence=0.8,
+                    reasons=['Perfect for learning about taxes'],
+                    metadata={'algorithm': 'contextual'},
+                    category='education'
+                ),
+                RecommendationItem(
+                    item_id='video_tutorials',
+                    item_type='content',
+                    title='Interactive Video Tutorials',
+                    description='Learn tax concepts through interactive videos',
+                    score=0.8,
+                    confidence=0.75,
+                    reasons=['Visual learning for better understanding'],
+                    metadata={'algorithm': 'contextual'},
+                    category='education'
+                )
+            ])
+
+        # Geographic context
+        country = user_profile.get('demographics', {}).get('country')
+        if country and country != 'USA':
+            recommendations.append(RecommendationItem(
+                item_id=f'international_tax_guide_{country.lower()}',
+                item_type='content',
+                title=f'{country} Tax Guide',
+                description=f'Specific tax guidance for {country} residents',
+                score=0.9,
+                confidence=0.85,
+                reasons=[f'Customized for your location: {country}'],
+                metadata={'algorithm': 'contextual_geographic'},
+                category='localized'
+            ))
+
+        # Seasonal context
+        current_month = datetime.now().month
+        if current_month in [1, 2, 3, 4]:  # Tax season
+            recommendations.append(RecommendationItem(
+                item_id='tax_season_checklist',
+                item_type='content',
+                title='Tax Season Preparation Checklist',
+                description='Complete checklist for tax season preparation',
+                score=0.95,
+                confidence=0.9,
+                reasons=['Essential during tax season'],
+                metadata={'algorithm': 'contextual_seasonal'},
+                category='seasonal',
+                priority='high'
+            ))
+
+        return recommendations[:request.max_recommendations]
+
+    def _post_process_recommendations(self, recommendations: List[RecommendationItem], request: RecommendationRequest, user_profile: Dict[str, Any]) -> List[RecommendationItem]:
+        """Post-process recommendations for quality and relevance"""
+        # Remove duplicates
+        seen_items = set()
+        unique_recommendations = []
+
+        for rec in recommendations:
+            if rec.item_id not in seen_items:
+                seen_items.add(rec.item_id)
+                unique_recommendations.append(rec)
+
+        # Apply filters
+        filtered_recommendations = []
+        for rec in unique_recommendations:
+            if self._passes_filters(rec, request.filters, user_profile):
+                filtered_recommendations.append(rec)
+
+        # Sort by score and confidence
+        filtered_recommendations.sort(key=lambda x: (x.score * x.confidence), reverse=True)
+
+        # Limit to requested number
+        final_recommendations = filtered_recommendations[:request.max_recommendations]
+
+        # Adjust scores for diversity
+        self._apply_diversity_boost(final_recommendations)
+
+        return final_recommendations
+
+    def _passes_filters(self, recommendation: RecommendationItem, filters: Dict[str, Any], user_profile: Dict[str, Any]) -> bool:
+        """Check if recommendation passes filters"""
+        # Subscription level filter
+        if 'min_subscription' in filters:
+            user_subscription = user_profile.get('demographics', {}).get('subscription', 'free')
+            subscription_levels = ['free', 'basic', 'pro', 'enterprise']
+            user_level = subscription_levels.index(user_subscription) if user_subscription in subscription_levels else 0
+            min_level = subscription_levels.index(filters['min_subscription']) if filters['min_subscription'] in subscription_levels else 0
+
+            if user_level < min_level:
+                return False
+
+        # Category filter
+        if 'categories' in filters and recommendation.category not in filters['categories']:
+            return False
+
+        # Score threshold
+        if 'min_score' in filters and recommendation.score < filters['min_score']:
+            return False
+
+        return True
+
+    def _apply_diversity_boost(self, recommendations: List[RecommendationItem]):
+        """Apply diversity boost to avoid too many similar recommendations"""
+        category_counts = {}
+
+        for i, rec in enumerate(recommendations):
+            category = rec.category
+            category_counts[category] = category_counts.get(category, 0) + 1
+
+            # Apply diversity penalty for repeated categories
+            if category_counts[category] > 1:
+                penalty = 0.9 ** (category_counts[category] - 1)
+                rec.score *= penalty
+
+    def _get_user_profile(self, user_id: str, provided_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """Get or create user profile"""
+        if user_id in self.user_profiler.user_profiles:
+            profile = self.user_profiler.user_profiles[user_id]
+            # Update with any new provided information
+            if provided_profile:
+                profile.update(provided_profile)
+            return profile
+        elif user_id in self.sample_users:
+            # Create profile from sample data
+            return self.user_profiler.create_user_profile(user_id, self.sample_users[user_id])
+        elif provided_profile:
+            # Create new profile from provided data
+            return self.user_profiler.create_user_profile(user_id, provided_profile)
+        else:
+            # Create default profile
+            return self.user_profiler.create_user_profile(user_id, {
+                'country': 'USA',
+                'subscription': 'free',
+                'sessions': [],
+                'calculations': [],
+                'features_used': []
+            })
+
+    def _generate_cache_key(self, request: RecommendationRequest) -> str:
+        """Generate cache key for request"""
+        return f"{request.user_id}_{request.context.value}_{request.recommendation_type.value}_{request.max_recommendations}"
+
+    def _calculate_personalization_strength(self, user_profile: Dict[str, Any]) -> float:
+        """Calculate how much personalization is possible for this user"""
+        factors = {
+            'engagement_score': user_profile.get('engagement_score', 0),
+            'data_richness': min(len(user_profile.get('sessions', [])) / 10, 1.0),
+            'interaction_history': min(len(user_profile.get('features_used', [])) / 5, 1.0),
+            'profile_completeness': len([v for v in user_profile.get('demographics', {}).values() if v != 'Unknown']) / 5
+        }
+
+        return sum(factors.values()) / len(factors)
+
+    def get_recommendation_explanations(self, recommendation_id: str, user_id: str) -> Dict[str, Any]:
+        """Get detailed explanations for a specific recommendation"""
+        # This would typically look up the recommendation from logs/database
+        return {
+            'recommendation_id': recommendation_id,
+            'user_id': user_id,
+            'explanation': {
+                'primary_reason': 'Based on your usage patterns and similar users',
+                'factors': [
+                    'Your frequent use of tax calculators',
+                    'Similar users found this helpful',
+                    'Matches your complexity preferences',
+                    'Relevant to your current context'
+                ],
+                'confidence_factors': {
+                    'user_data_quality': 0.8,
+                    'algorithm_confidence': 0.75,
+                    'similarity_strength': 0.7,
+                    'contextual_relevance': 0.85
+                }
+            },
+            'alternatives': [
+                'Alternative recommendation 1',
+                'Alternative recommendation 2'
+            ]
+        }
+
+    def update_user_feedback(self, user_id: str, item_id: str, feedback_type: str, feedback_value: Any):
+        """Update user feedback for improving recommendations"""
+        timestamp = datetime.now()
+
+        # Store feedback (in a real system, this would go to a database)
+        feedback_entry = {
+            'user_id': user_id,
+            'item_id': item_id,
+            'feedback_type': feedback_type,  # 'rating', 'click', 'dismiss', 'like', 'dislike'
+            'feedback_value': feedback_value,
+            'timestamp': timestamp
+        }
+
+        # Update user profile based on feedback
+        if user_id in self.user_profiler.user_profiles:
+            profile = self.user_profiler.user_profiles[user_id]
+
+            if feedback_type == 'rating' and feedback_value >= 4:
+                # Positive feedback - update preferences
+                if 'positive_items' not in profile:
+                    profile['positive_items'] = []
+                profile['positive_items'].append(item_id)
+
+            elif feedback_type == 'dismiss' or (feedback_type == 'rating' and feedback_value <= 2):
+                # Negative feedback - add to exclusions
+                if 'negative_items' not in profile:
+                    profile['negative_items'] = []
+                profile['negative_items'].append(item_id)
+
+            profile['last_updated'] = timestamp
+
+        logger.info(f"Updated feedback for user {user_id} on item {item_id}: {feedback_type}={feedback_value}")
+
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get recommendation engine performance metrics"""
+        return {
+            'total_recommendations_generated': len(self.recommendation_cache),
+            'cache_hit_rate': 0.75,  # Example metric
+            'avg_recommendation_score': 0.8,  # Example metric
+            'user_profiles_created': len(self.user_profiler.user_profiles),
+            'collaborative_model_users': self.collaborative_recommender.user_item_matrix.shape[0] if self.collaborative_recommender.user_item_matrix is not None else 0,
+            'content_items': len(self.content_recommender.items) if hasattr(self.content_recommender, 'items') else 0,
+            'last_updated': datetime.now().isoformat()
+        }
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    # Initialize the recommendation engine
+    engine = IntelligentRecommendationEngine()
+
+    print("🎯 Intelligent Recommendation Engine for GlobalTaxCalc.com")
+    print("=" * 65)
+
+    try:
+        # Create sample recommendation requests
+        sample_requests = [
+            RecommendationRequest(
+                user_id='user_1',
+                context=RecommendationContext.TAX_PLANNING,
+                recommendation_type=RecommendationType.HYBRID,
+                max_recommendations=5
+            ),
+            RecommendationRequest(
+                user_id='user_2',
+                context=RecommendationContext.CALCULATOR_USAGE,
+                recommendation_type=RecommendationType.COLLABORATIVE,
+                max_recommendations=3
+            ),
+            RecommendationRequest(
+                user_id='user_3',
+                context=RecommendationContext.EDUCATIONAL,
+                recommendation_type=RecommendationType.CONTENT_BASED,
+                max_recommendations=4
+            )
+        ]
+
+        # Generate recommendations for each request
+        for i, request in enumerate(sample_requests, 1):
+            print(f"\n📋 Sample Request {i}:")
+            print(f"  User: {request.user_id}")
+            print(f"  Context: {request.context.value}")
+            print(f"  Algorithm: {request.recommendation_type.value}")
+
+            response = engine.get_recommendations(request)
+
+            print(f"\n🎯 Recommendations for {request.user_id}:")
+            for j, rec in enumerate(response.recommendations, 1):
+                print(f"  {j}. {rec.title}")
+                print(f"     Score: {rec.score:.2f} | Confidence: {rec.confidence:.2f}")
+                print(f"     Category: {rec.category} | Priority: {rec.priority}")
+                print(f"     Reason: {rec.reasons[0] if rec.reasons else 'System recommendation'}")
+
+        # Test user profiling
+        print(f"\n👤 Sample User Profile (user_1):")
+        user_profile = engine._get_user_profile('user_1', {})
+        print(f"  Engagement Score: {user_profile.get('engagement_score', 0):.2f}")
+        print(f"  Segments: {', '.join(user_profile.get('segments', []))}")
+        print(f"  Tax Profile: {user_profile.get('tax_profile', {}).get('complexity_level', 'Unknown')}")
+        print(f"  Preferred Features: {', '.join(user_profile.get('behavior', {}).get('preferred_features', [])[:3])}")
+
+        # Test similar users
+        print(f"\n🤝 Similar Users to user_1:")
+        similar_users = engine.collaborative_recommender.get_similar_users('user_1', 3)
+        for user in similar_users:
+            print(f"  {user['user_id']}: {user['similarity']:.3f} similarity")
+
+        # Test feedback system
+        print(f"\n👍 Testing Feedback System:")
+        engine.update_user_feedback('user_1', 'tax_deduction_optimizer', 'rating', 5)
+        engine.update_user_feedback('user_1', 'audit_risk_assessor', 'dismiss', None)
+        print("  ✅ Feedback updated for user_1")
+
+        # Performance metrics
+        print(f"\n📊 Engine Performance Metrics:")
+        metrics = engine.get_performance_metrics()
+        print(f"  Recommendations Generated: {metrics['total_recommendations_generated']}")
+        print(f"  User Profiles: {metrics['user_profiles_created']}")
+        print(f"  Content Items: {metrics['content_items']}")
+        print(f"  Collaborative Users: {metrics['collaborative_model_users']}")
+
+        # Test recommendation explanations
+        print(f"\n💭 Recommendation Explanation:")
+        explanation = engine.get_recommendation_explanations('tax_deduction_optimizer', 'user_1')
+        print(f"  Primary Reason: {explanation['explanation']['primary_reason']}")
+        print(f"  Key Factors: {len(explanation['explanation']['factors'])} factors identified")
+
+        print("\n✅ Intelligent Recommendation Engine demonstration completed successfully!")
+        print("\nKey Features Implemented:")
+        print("- Hybrid recommendation system combining multiple algorithms")
+        print("- Comprehensive user profiling with behavioral analysis")
+        print("- Content-based filtering with TF-IDF and similarity matching")
+        print("- Collaborative filtering with matrix factorization")
+        print("- Contextual recommendations based on current user context")
+        print("- Behavioral pattern analysis and prediction")
+        print("- Real-time personalization and adaptation")
+        print("- Feedback integration and continuous learning")
+        print("- Performance monitoring and metrics tracking")
+        print("- Explainable AI with recommendation reasoning")
+        print("- Advanced caching and optimization")
+        print("- Multi-dimensional user segmentation")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()

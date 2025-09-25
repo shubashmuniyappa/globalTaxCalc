@@ -1,0 +1,138 @@
+{
+  "total_services": 26,
+  "healthy": 10,
+  "warning": 16,
+  "error": 0,
+  "services": {
+    "ad-service": {
+      "type": "node",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "advanced-tax-engine": {
+      "type": "python",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "affiliate-system": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "ai-service": {
+      "type": "python",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "analytics": {
+      "type": "python",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "analytics-service": {
+      "type": "node",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "api-gateway": {
+      "type": "node",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "auth-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "backend": {
+      "type": "python",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "cdn-edge": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "cms": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "content-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "file-processing-service": {
+      "type": "python",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "file-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "frontend": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "geolocation-service": {
+      "type": "node",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "ml-platform": {
+      "type": "python",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "monitoring-health-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "monitoring-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "notification-service": {
+      "type": "node",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "performance-optimization": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "report-export-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "search-service": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 1
+    },
+    "tax-engine": {
+      "type": "python",
+      "status": "healthy",
+      "issues_count": 0
+    },
+    "testing-qa": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    },
+    "tests": {
+      "type": "node",
+      "status": "warning",
+      "issues_count": 2
+    }
+  }
+}
